@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block inner_css %}
+{{super()}}
+<style>
+    select {
+        text-align: center;
+        background-color: #ECF0F1;
+        border: 2px solid transparent;
+        border-radius: 3px;
+        font-size: 16px;
+        font-weight: 200;
+        padding: 10px 0;
+        width: 250px;
+        transition: border .5s;
+    }
+</style>
+{% endblock %}
+{% block inner_content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="alert alert-info" role="alert">
+  <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+    {% for message in messages %}
+    <h4>{{ message }}</h4>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endwith %}
+<form action="/editself" method="POST">
+    <div class="login">
+        <div class="login-screen">
+            <div class="app-title">
+                <h1>edit</h1>
+            </div>
+
+            <div class="login-form">
+                <h6>userid</h6>
+                <div class="control-group">
+                    <input type="text" class="login-field" placeholder="UserID" name="userid" value={{current_user.userid}}>
+                    <label class="login-field-icon fui-user" for="login-name"></label>
+                </div>
+
+                <h6>name</h6>
+                <div class="control-group">
+                    <input type="text" class="login-field" placeholder="name" name="name" value={{current_user.name}}>
+                    <label class="login-field-icon fui-user" for="login-name"></label>
+                </div>
+
+                <h6>email</h6>
+                <div class="control-group">
+                    <input type="text" class="login-field" placeholder="Email address" name="email" value={{current_user.email}}>
+                    <label class="login-field-icon fui-user" for="login-name"></label>
+                </div>
+
+
+                <div class="control-group">
+                    <input type="password" class="login-field" value="" placeholder="Password" name="password">
+                    <label class="login-field-icon fui-lock" for="login-pass"></label>
+                </div>
+
+                <div class="control-group">
+                    <input type="password" class="login-field" value="" placeholder="Confirm Password"
+                           name="conf_password">
+                    <label class="login-field-icon fui-lock" for="login-pass"></label>
+                </div>
+
+
+                <input type="submit" value="Confirm" class="btn btn-primary btn-large btn-block">
+                <br>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

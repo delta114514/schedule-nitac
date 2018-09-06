@@ -1,0 +1,35 @@
+user1 = User(user_id="first", name="name", password="pass")
+user2 = User(user_id="second", name="name", password="pass")
+user3 = User(user_id="third", name="name", password="pass")
+session.add(user1)
+session.add(user2)
+session.add(user3)
+session.commit()
+talk1 = Talk_group(name="first")
+talk2 = Talk_group(name="second")
+user2.talk_groups.append(talk1)
+user1.talk_groups.append(talk1)
+talk1.users
+user1.talk_groups.append(talk2)
+user2.talk_groups.append(talk2)
+talk2.users
+talk2.users.query.order_by("User.id")
+session.add(talk1)
+session.commit()
+session.add(talk2)
+session.commit()
+user2.talk_groups
+set(user2.talk_groups)
+talk1
+cont = Content(user_id=user1.id, talk_group_id=talk1.id, text="hi")
+talk1.content
+talk1.content.append(cont)
+session.add(cont)
+session.commit()
+talk1.content
+cont = Content(user_id=user1.id, talk_group_id=talk1.id, text="di")
+talk1.content.append(cont)
+session.add(cont)
+session.commit()
+talk1.content
+talk1.content.filter(Content.id > 1)

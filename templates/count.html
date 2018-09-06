@@ -1,0 +1,6 @@
+{% extends "layout.html"%}
+
+
+{% block inner_content %}
+<table border="1"><tr><th>url</th><th>value</th></tr>{% for i in que %}<tr><td>{{i.url}}</td><td>{{i.value}}</td></tr>{% endfor %}</table>
+{% endblock %}
