@@ -1,35 +1,216 @@
-user1 = User(user_id="first", name="name", password="pass")
-user2 = User(user_id="second", name="name", password="pass")
-user3 = User(user_id="third", name="name", password="pass")
-session.add(user1)
-session.add(user2)
-session.add(user3)
-session.commit()
-talk1 = Talk_group(name="first")
-talk2 = Talk_group(name="second")
-user2.talk_groups.append(talk1)
-user1.talk_groups.append(talk1)
-talk1.users
-user1.talk_groups.append(talk2)
-user2.talk_groups.append(talk2)
-talk2.users
-talk2.users.query.order_by("User.id")
-session.add(talk1)
-session.commit()
-session.add(talk2)
-session.commit()
-user2.talk_groups
-set(user2.talk_groups)
-talk1
-cont = Content(user_id=user1.id, talk_group_id=talk1.id, text="hi")
-talk1.content
-talk1.content.append(cont)
-session.add(cont)
-session.commit()
-talk1.content
-cont = Content(user_id=user1.id, talk_group_id=talk1.id, text="di")
-talk1.content.append(cont)
-session.add(cont)
-session.commit()
-talk1.content
-talk1.content.filter(Content.id > 1)
+
+{% extends "bootstrap/base.html" %}
+{% block head %}
+{{super()}}
+<link rel="apple-touch-icon" sizes="180x180" href="/static/icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/icon/favicon-16x16.png">
+<link rel="manifest" href="/static/icon/site.webmanifest">
+<link rel="mask-icon" href="/static/icon/safari-pinned-tab.svg" color="#5bbad5">
+<meta name="msapplication-TileColor" content="#00aba9">
+<meta name="theme-color" content="#ffffff">
+{% endblock %}
+{% block styles %}
+{{super()}}
+{% block inner_css %}{% endblock %}
+<link rel="stylesheet" href="/static/style.css" type="text/css">
+<link href="https://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+<style>
+    .noentry {
+        padding: 10px;
+        color: #999999;
+        font-size:4.0em;
+        font-weight: bold;
+        text-align: center
+    }
+    .navbar-default {
+        background-color: #2a83a2;
+        border-color: #bdddfa;
+        color: #FFFFFF;
+    }
+
+    body > div.navbar-wrapper > div > div > div > div.navbar-collapse.collapse > ul > li > a {
+        color: white;
+        font-family: YuGothic, 'Yu Gothic', 'ヒラギノ角ゴシック', 'Hiragino Sans', sans-serif;
+
+    }
+
+    body > div.navbar-wrapper > div > div > div > div.navbar-collapse.collapse > ul.nav.navbar-nav.navbar-right > li > p {
+        color: white;
+        font-family: YuGothic, 'Yu Gothic', 'ヒラギノ角ゴシック', 'Hiragino Sans', sans-serif;
+    }
+
+    body > div.navbar-wrapper > div > div > div > div.navbar-header > a {
+        color: white;
+        font-family: YuGothic, 'Yu Gothic', 'ヒラギノ角ゴシック', 'Hiragino Sans', sans-serif;
+    }
+
+    body > div.navbar-wrapper > div > div > div > div.navbar-header > a > i > small {
+        color: white;
+        font-family: YuGothic, 'Yu Gothic', 'ヒラギノ角ゴシック', 'Hiragino Sans', sans-serif;
+    }
+
+    body > div.navbar-wrapper > div > div > div > div.navbar-collapse.collapse > ul > li > a:hover {
+        color: lightgray;
+        font-family: YuGothic, 'Yu Gothic', 'ヒラギノ角ゴシック', 'Hiragino Sans', sans-serif;
+
+    }
+
+    body > div.navbar-wrapper > div > div > div > div.navbar-header > a:hover {
+        color: lightgray;
+        font-family: YuGothic, 'Yu Gothic', 'ヒラギノ角ゴシック', 'Hiragino Sans', sans-serif;
+    }
+    body > div.navbar-wrapper > div > div > div > div.navbar-collapse.collapse > ul.nav.navbar-nav.navbar-right > li.dropdown.open > a > b{
+        color: darkgray;
+        font-family: YuGothic, 'Yu Gothic', 'ヒラギノ角ゴシック', 'Hiragino Sans', sans-serif;
+    }
+    .navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:focus, .navbar-default .navbar-nav>.open>a:hover {
+    color: #555;
+    background-color: #ebf6f7;
+}
+
+</style>
+{% endblock %}
+{% block script %}
+{{super()}}
+{% block inner_script %}{% endblock %}
+{% endblock %}
+
+
+{% block title %}
+{% if title %}
+{{ title }}
+{% else %}
+Schedule-Nitac
+{% endif %}
+{% endblock %}
+
+{% block navbar %}
+<div class="navbar-wrapper">
+    <div class="container-fluid">
+        <div class="navbar navbar-default navbar-static-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span><span
+                            class="icon-bar"></span><span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/">Class(非公式)
+                        <i class="brand_network">
+                            <small>
+                                <small>Class Manager</small>
+                            </small>
+                        </i>
+                    </a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="/">Changes</a></li>
+                    </ul>
+                    {% block inner_nav %}
+                    {% endblock %}
+                    <ul class="nav navbar-nav">
+                        <li><a href="/proposal">意見箱</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav">
+                        <li><a href="/json/reference">Json Reference</a></li>
+                    </ul>
+                    {% if current_user.is_authenticated %}
+                    <ul class="nav navbar-nav">
+                        <li><a href="/teacher">edit</a></li>
+                    </ul>
+                    {% endif %}
+                    <ul class="nav navbar-nav navbar-right">
+                        {% if current_user.is_authenticated %}
+                        <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <span class="user-name">
+                                        {{current_user.name}}
+                                    </span>
+                            <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <div class="navbar-content">
+                                        <div class="row">
+                                            <div class="col-md-7">
+                                                <span>{{current_user.name}}</span>
+                                                <p class="text-muted small">
+                                                    {{current_user.email}}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="navbar-footer">
+                                        <div class="navbar-footer-content">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <a href="/editself" class="btn btn-default btn-sm pull-right"><i
+                                                            class="fa fa-power-off" aria-hidden="true"></i> 設定</a>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <a href="/logout" class="btn btn-default btn-sm pull-right"><i
+                                                            class="fa fa-power-off" aria-hidden="true"></i> Sign Out</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li><p class="navbar-text">Already have an account?</p></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b>Login</b> <span
+                                    class="caret"></span></a>
+                            <ul id="login-dp" class="dropdown-menu">
+                                <li>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <form action="/login" method="POST">
+                                                <div class="login">
+                                                    <div class="login-screen">
+                                                        <div class="login-form">
+                                                            <div class="control-group">
+                                                                <input type="text" class="login-field" value=""
+                                                                       placeholder="UserID or Email address"
+                                                                       name="userid">
+                                                                <label class="login-field-icon fui-user"
+                                                                       for="login-name"></label>
+                                                            </div>
+                                                            <div class="control-group">
+                                                                <input type="password" class="login-field" value=""
+                                                                       placeholder="password" name="password">
+                                                                <label class="login-field-icon fui-lock"
+                                                                       for="login-pass"></label>
+                                                            </div>
+                                                            <input type="submit" value="Log in"
+                                                                   class="btn btn-primary btn-large btn-block">
+                                                            <br>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="bottom text-center">
+                                            <font color="#2f4f4f">アカウント作成をしますか？ :</font> <a
+                                                href="/register"><b>教師</b></a>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block content %}
+<div style="padding:60px 0 0 0">
+
+    {% block inner_content %}{% endblock %}
+
+</div>
+{% endblock %}

@@ -19,7 +19,6 @@ dat = {2: '1M', 3: '1E', 5: '1C', 7: '1A', 11: '2M', 13: '2E', 17: '2C', 19: '2A
            31: '3C', 37: '3A', 41: '4M', 43: '4EJ', 47: '4ED', 53: '4C', 59: '4A', 61: '5M', 67: '5EJ',
            71: '5ED', 73: '5C', 79: '5A', 83: '1A.ME', 89: '1A.CA', 97: '2A.ME', 101: '2A.CA', 1: "全体"}
 all_set = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101}
-hashed_pass = b'C\x81\xf4\xd8\xba:v\xcf\xd0\xb0\x9a\x85P\x983i\xcf\x7f\xea\x19h\xb0!wK\xd2I\xc8?wmq'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -29,8 +28,12 @@ login_manager.init_app(app)
 login_manager.login_view = "/manage"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 db = SQLAlchemy(app)
 bootstrap = Bootstrap(app)
+
+with open("password", "r") as f:
+    pass1, pass2, pass3 = f.read().split()
 
 
 class View(db.Model):
@@ -204,7 +207,7 @@ def main_page(page):
     return feed_cookie(render_template(page, page=p, prim=prime_factors, dat=dat, user=Teacher,
                                        datetime=datetime, map=map, list=list, int=int, len=len, range=range,
                                        lambda_=lambda x: dat[x]),
-                       list(accumulate(tmp, lambda x, y: x * y))[-1], request.cookies)
+                       list(accumulate(tmp, lambda x, y: x * y))[-1])
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -230,8 +233,7 @@ def register():
 
     adminpass = str(request.form['adminpass'])
 
-    if hashlib.sha256(
-                    b"%a" % adminpass).digest() != b'y\xdf\xc8A3\x83h\x92w\x91\x8dr\xed\xc2Y>"\xebC\x05\x9c\xe0\x12G}2\x9d\x0c\x7f\xdexh':
+    if adminpass != pass3:
         flash('Admin pass is not correct')
         error = True
     if not request.form["password"]:
@@ -474,8 +476,7 @@ def edit(num=0):
 
 @app.route("/<passw>/count")
 def count(passw):
-    global hashed_pass
-    if hashlib.sha256(b"%a" % passw).digest() == hashed_pass:
+    if passw == pass2:
         return render_template("count.html", que=View.query.all())
     else:
         return redirect("404.html")
@@ -494,8 +495,7 @@ def proposal():
 
 @app.route("/proposals/<passw>")
 def proposals(passw):
-    if hashlib.sha256(
-                    b"%a" % passw).digest() == b'\xf8\x83\xa7i;\x17 \xe3\xf4\x7f\xb8j\xbe\xd6I\xd2*\xeb\xe9*:c\xcf\xc9\x0e\xb5\xe3Lu\xb4\x94\xd9':
+    if passw == pass1:
         try:
             with open("art.txt", "r") as file:
                 tmp = file.read().split("[EOA]")[:-1]
@@ -515,8 +515,7 @@ def flush():
 
 @app.route('/<passw>/static/<filename>')
 def static_dir(passw, filename):
-    global hashed_pass
-    if hashlib.sha256(b"%a" % passw).digest() == hashed_pass:
+    if passw == pass2:
         return send_from_directory('static', filename)
     else:
         return redirect("404.html")
@@ -524,8 +523,7 @@ def static_dir(passw, filename):
 
 @app.route('/<passw>/image/<filename>')
 def image_dir(passw, filename):
-    global hashed_pass
-    if hashlib.sha256(b"%a" % passw).digest() == hashed_pass:
+    if passw == pass2:
         return send_from_directory('image', filename)
     else:
         return redirect("404.html")
@@ -537,10 +535,9 @@ def files(filename):
     return send_from_directory("./", filename)
 
 
-def feed_cookie(content, cookie, now):
+def feed_cookie(content, cookie):
     response = make_response(content)
     max_age = 60 * 60 * 24 * 120
-    expires = int(datetime.datetime.now().timestamp()) + max_age
     response.set_cookie('depart', value=str(cookie*810893), max_age=max_age)
     return response
 
