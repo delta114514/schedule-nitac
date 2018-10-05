@@ -3,21 +3,24 @@
 import os
 import hashlib
 import datetime
+import random
 
-from functools import lru_cache
 from collections import defaultdict
 from itertools import accumulate
 
-from flask import Flask, flash, redirect, render_template, request, session, send_from_directory, jsonify, make_response, abort
+from flask import Flask, flash, redirect, render_template, request, session, send_from_directory, jsonify, \
+    make_response, abort
 from flask_login import login_user, logout_user, LoginManager, UserMixin, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 
-
 today = datetime.date(10, 1, 1)
 dat = {2: '1M', 3: '1E', 5: '1C', 7: '1A', 11: '2M', 13: '2E', 17: '2C', 19: '2A', 23: '3M', 29: '3E',
-           31: '3C', 37: '3A', 41: '4M', 43: '4EJ', 47: '4ED', 53: '4C', 59: '4A', 61: '5M', 67: '5EJ',
-           71: '5ED', 73: '5C', 79: '5A', 83: '1A.ME', 89: '1A.CA', 97: '2A.ME', 101: '2A.CA', 1: "全体"}
+       31: '3C', 37: '3A', 41: '4M', 43: '4EJ', 47: '4ED', 53: '4C', 59: '4A', 61: '5M', 67: '5EJ',
+       71: '5ED', 73: '5C', 79: '5A', 83: '1A.ME', 89: '1A.CA', 97: '2A.ME', 101: '2A.CA'}
+dat_rev = {'1M': 2, '1E': 3, '1C': 5, '1A': 7, '2M': 11, '2E': 13, '2C': 17, '2A': 19, '3M': 23, '3E': 29, '3C': 31,
+           '3A': 37, '4M': 41, '4EJ': 43, '4ED': 47, '4C': 53, '4A': 59, '5M': 61, '5EJ': 67, '5ED': 71, '5C': 73,
+           '5A': 79, '1A.ME': 83, '1A.CA': 89, '2A.ME': 97, '2A.CA': 101, "全体": 1}
 all_set = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101}
 
 app = Flask(__name__)
@@ -96,9 +99,10 @@ class Entry(db.Model):
     remark = db.Column(db.String(256))
     contributor = db.Column(db.Integer)
 
-    def __init__(self, change_from_class="", change_to_class="", change_from_date="", change_to_date="",
+    def __init__(self,changeid=999, change_from_class="", change_to_class="", change_from_date="", change_to_date="",
                  change_from_time="", change_to_time="", target_depart="", remark="", contributor="",
-                 change_from_teacher="", change_to_teacher="", published=1):
+                 change_from_teacher="", change_to_teacher="", published=0):
+        self.changeid = changeid
         self.change_from_class = change_from_class
         self.change_to_class = change_to_class
         self.change_from_date = change_from_date
@@ -124,7 +128,7 @@ def unauthorized():
 
 
 def get_id(self):
-    return unicode(self.session_token)
+    return self.session_token
 
 
 @app.errorhandler(404)
@@ -160,8 +164,8 @@ def before_request():
         return
 
 
-def main_page(page):
-    global dat, all_set
+def main_page(page, class_=None):
+    global dat, all_set, dat_rev
     try:
         global today
         if today < datetime.date.today():
@@ -169,50 +173,63 @@ def main_page(page):
     except:
         del_lim()
         today = datetime.date.today()
-
-    if request.method == 'POST':
-        tmp = set()
-        for key, item in request.form.items():
-            if key[:5] == "radio":
-                tmp.add(int(item))
-        if not tmp:
-            tmp = all_set | {1}
+    if class_:
+        try:
+            tmp = {dat_rev[class_], }
+        except ValueError:
+            abort(404)
     else:
-        if current_user.is_authenticated:
-            tmp = all_set | {1}
-        else:
-            try:
-                tmp = prime_factors(intize(request.cookies))
-            except:
-                tmp = all_set | {1}
+        if request.method == 'POST':
+            tmp = set()
+            for key, item in request.form.items():
+                if key[:5] == "radio":
+                    tmp.add(int(item))
             if not tmp:
                 tmp = all_set | {1}
+        else:
+            if current_user.is_authenticated:
+                tmp = all_set | {1}
+            else:
+                try:
+                    tmp = prime_factors(intize(request.cookies))
+                except:
+                    tmp = all_set | {1}
+                if not tmp:
+                    tmp = all_set | {1}
 
     if current_user.is_authenticated:
         p = Entry.query.order_by(Entry.target_depart).all()
     else:
         p = Entry.query.filter(Entry.published.in_([1])).order_by(Entry.target_depart).all()
 
-    for i in p:
-        print(i.target_depart)
-
     for i in p[::]:
         if not prime_factors(i.target_depart) & tmp:
             if i.target_depart != 1:
                 p.remove(i)
-
-    for i in p:
-        print(i.target_depart)
 
     return feed_cookie(render_template(page, page=p, prim=prime_factors, dat=dat, user=Teacher,
                                        datetime=datetime, map=map, list=list, int=int, len=len, range=range,
                                        lambda_=lambda x: dat[x]),
                        list(accumulate(tmp, lambda x, y: x * y))[-1])
 
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory("static/icon", "favicon.ico")
+
 
 @app.route("/", methods=['GET', 'POST'])
 def article():
     return main_page("changes.html")
+
+
+@app.route("/<class_>", methods=['GET', 'POST'])
+def article_class(class_):
+    return main_page("changes.html", class_)
+
+
+@app.route("/one/<class_>", methods=['GET', 'POST'])
+def ones_class(class_):
+    return main_page("ones.html", class_)
 
 
 @app.route("/one", methods=['GET', 'POST'])
@@ -321,16 +338,17 @@ def upload():
             error = True
         if error:
             return redirect("/teacher")
-        to_class = ""
-        if request.form["from_class"] == request.form["to_class"]:
-            to_class = request.form["to_class"]
-        else:
-            to_class = ""
+        to_class = request.form["to_class"]
+
+        while True:
+            id_ = random.randint(500, 1000)
+            if not Entry.query.filter(Entry.changeid.in_([id_])):
+                break
         entry = Entry(change_from_class=request.form["from_class"], change_to_class=to_class,
                       change_from_date=request.form["from_date"], change_to_date=request.form["to_date"],
                       change_from_time=request.form["from_time"], change_to_time=request.form["to_time"],
                       change_from_teacher=request.form["from_teacher"], change_to_teacher=request.form["to_teacher"],
-                      remark=request.form["remark"], contributor=current_user.id, target_depart=tmp)
+                      remark=request.form["remark"], contributor=current_user.id, target_depart=tmp, changeid=id_)
         db.session.add(entry)
         db.session.commit()
         return redirect('/')
@@ -343,7 +361,7 @@ def editself():
     if request.method == "GET":
         return render_template("editself_tea.html")
     if request.form["password"] == request.form["conf_password"] and str(hashlib.sha256(
-                    b'%a' % str(request.form['password'])).digest()) == current_user.password_hash:
+            b'%a' % str(request.form['password'])).digest()) == current_user.password_hash:
         current_user.name = request.form["name"]
         current_user.email = request.form["email"]
         current_user.userid = request.form["userid"]
@@ -458,10 +476,7 @@ def edit(num=0):
         p.change_from_time = request.form["from_time"]
         p.change_from_teacher = request.form["from_teacher"]
         p.change_to_date = request.form["to_date"]
-        if request.form["from_class"] == request.form["to_class"]:
-            p.change_to_class = ""
-        else:
-            p.change_to_class = request.form["to_class"]
+        p.change_to_class = request.form["to_class"]
         p.change_to_time = request.form["to_time"]
         p.change_to_teacher = request.form["to_teacher"]
         p.remark = request.form["remark"]
@@ -470,8 +485,14 @@ def edit(num=0):
             db.session.delete(p)
             db.session.commit()
             return redirect("/")
-        db.session.commit()
-    return render_template('editprofile.html', page=p, prim=prime_factors, dat=dat)
+
+        tmp = Entry.query.filter(Entry.changeid.in_([int(request.form["number"])])).first()
+        if tmp and tmp != p:
+            flash("管理ナンバーが重複しています")
+        else:
+            p.changeid = int(request.form["number"])
+            db.session.commit()
+    return render_template('edit.html', page=p, prim=prime_factors, dat=dat)
 
 
 @app.route("/<passw>/count")
@@ -534,11 +555,70 @@ def image_dir(passw, filename):
 def files(filename):
     return send_from_directory("./", filename)
 
+@app.route('/to_pdf/<id_>')
+def to_pdf(id_):
+    col = {"m": "red", "e": "orange", "c": "cyan", "a": "green", "all": "#250d00"}
+    art = Entry.query.filter(Entry.changeid.in_([id_])).first()
+    if not art:
+        abort(404)
+    depart = art.target_depart
+    if depart == 2021:
+        depart = "4E"
+        color = col["e"]
+    elif depart == 4757:
+        depart = "5E"
+        color = col["e"]
+    elif depart == 210:
+        depart = "1年"
+        color = col["all"]
+    elif depart == 46189:
+        depart = "2年"
+        color = col["all"]
+    elif depart == 765049:
+        depart = "3年"
+        color = col["all"]
+    elif depart == 259106347:
+        depart = "4年"
+        color = col["all"]
+    elif depart == 1673450759:
+        depart = "5年"
+        color = col["all"]
+    elif depart == 7387:
+        depart = "専攻科1年"
+        color = col["all"]
+    elif depart == 9797:
+        depart = "専攻科2年"
+        color = col["all"]
+    elif depart == 3217644767340672907899084554130:
+        depart = "本科生"
+        color = col["all"]
+    elif depart == 232862364358497360900063316880507363070:
+        depart = "全学生"
+        color = col["all"]
+    elif depart == 72370439:
+        depart = "専攻科生"
+        color = col["all"]
+    else:
+        depart = ",".join(list(map(lambda x: dat[x], prime_factors(depart))))
+        color = col[depart[-1].lower()]
+
+    under = "{}月{}日 学生課 No.{}".format(int(datetime.date.today().strftime("%m")), int(datetime.date.today().strftime("%d")), art.changeid)
+
+    situ = "と振替える" if art.change_from_teacher and art.change_to_teacher else "に移動する" if art.change_from_date and art.change_to_date else "休講とする"
+
+    if art.change_from_date == art.change_to_date and art.change_from_teacher == art.change_to_teacher and art.change_from_class == art.change_to_class:
+        situ = art.remark
+        art.change_to_class = ""
+        art.change_to_date = "none"
+        art.change_to_teacher = ""
+
+    return render_template("to_pdf.html", datetime=datetime, dat=dat, art=art, depart=depart, map=map, int=int, list=list, under=under, situ=situ, color=color)
+
 
 def feed_cookie(content, cookie):
     response = make_response(content)
     max_age = 60 * 60 * 24 * 120
-    response.set_cookie('depart', value=str(cookie*810893), max_age=max_age)
+    response.set_cookie('depart', value=str(cookie * 810893), max_age=max_age)
     return response
 
 
@@ -547,9 +627,7 @@ def intize(cookie):
 
 
 def json_it(entry):
-    dat = {2: '1M', 3: '1E', 5: '1C', 7: '1A', 11: '2M', 13: '2E', 17: '2C', 19: '2A', 23: '3M', 29: '3E',
-           31: '3C', 37: '3A', 41: '4M', 43: '4EJ', 47: '4ED', 53: '4C', 59: '4A', 61: '5M', 67: '5EJ',
-           71: '5ED', 73: '5C', 79: '5A', 83: '1A.ME', 89: '1A.CA', 97: '2A.ME', 101: '2A.CA'}
+    global dat
     json = {
         "from": {
             "class": entry.change_from_class,
@@ -602,4 +680,4 @@ def prime_factors(n):
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)
-    app.run(debug=False, host='0.0.0.0', port=8080, threaded=True)
+    app.run(debug=False, host='0.0.0.0', port=8888, threaded=True)
