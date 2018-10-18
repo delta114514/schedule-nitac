@@ -128,6 +128,11 @@
 
     </div>
 </form>
+{% if new %}
+<div class="alert alert-info">
+    新しい時間割変更があります
+</div>
+{% endif %}
 <div class="table-responsive">
     <table class="table table-striped" style="font-size: 10pt;">
         <thead>
@@ -138,10 +143,10 @@
             <th>変更科目</th>
             <th>備考</th>
             {% if current_user.is_authenticated %}
-                <th>id</th>
-                <th>印刷用URL</th>
-                <th>公開</th>
-                <th>編集</th>
+            <th>id</th>
+            <th>印刷用URL</th>
+            <th>公開</th>
+            <th>編集</th>
             {% endif %}
         </tr>
         </thead>
@@ -184,10 +189,8 @@
             {% if current_user.is_authenticated %}
             <td>{{art.changeid}}</td>
             <td><a href="/to_pdf/{{art.changeid}}">URL</a>
-            {% if current_user.is_authenticated and art.contributor==current_user.id %}
             <td>{% if art.published == 1 %}はい{% else %}いいえ{% endif %}</td>
             <td><a href="/edit/{{art.changeid}}">編集</a></td>
-            {% endif %}
             {% endif %}
         </tr>
         {% endfor%}

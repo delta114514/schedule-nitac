@@ -161,7 +161,6 @@ def before_request():
             return
         result.value += 1
         db.session.commit()
-        return
 
 
 def main_page(page, class_=None):
@@ -197,6 +196,18 @@ def main_page(page, class_=None):
                 if not tmp:
                     tmp = all_set | {1}
 
+    try:
+        last = request.cookies.get("last_seen")
+        print(last, Entry.query.filter(Entry.published.in_([1])).order_by(Entry.timestamp.desc()).first().timestamp)
+        if datetime.datetime(*map(int, last.split("-"))) < Entry.query.filter(Entry.published.in_([1])).order_by(
+                Entry.timestamp.desc()).first().timestamp:
+            new = 1
+        else:
+            raise ValueError
+    except:
+        new = 0
+
+
     if current_user.is_authenticated:
         p = Entry.query.order_by(Entry.target_depart).all()
     else:
@@ -209,7 +220,7 @@ def main_page(page, class_=None):
 
     return feed_cookie(render_template(page, page=p, prim=prime_factors, dat=dat, user=Teacher,
                                        datetime=datetime, map=map, list=list, int=int, len=len, range=range,
-                                       lambda_=lambda x: dat[x]),
+                                       lambda_=lambda x: dat[x], new=new),
                        list(accumulate(tmp, lambda x, y: x * y))[-1])
 
 @app.route("/favicon.ico")
@@ -259,10 +270,10 @@ def register():
     if request.form["password"] != request.form["conf_password"]:
         flash('The password confirmation does not match.')
         error = True
-    if Teacher.query.filter(Teacher.userid.in_([request.form['userid']])).first() != current_user:
+    if Teacher.query.filter(Teacher.userid.in_([request.form['userid']])).first() not in [user, None]:
         flash("The TeacherID is already used")
         error = True
-    if Teacher.query.filter(Teacher.email.in_([request.form['email']])).first() != current_user:
+    if Teacher.query.filter(Teacher.email.in_([request.form['email']])).first() not in [user, None]:
         flash("The Email address is already used")
         error = True
     if error:
@@ -342,7 +353,7 @@ def upload():
 
         while True:
             id_ = random.randint(500, 1000)
-            if not Entry.query.filter(Entry.changeid.in_([id_])):
+            if not Entry.query.filter(Entry.changeid.in_([id_])).first():
                 break
         entry = Entry(change_from_class=request.form["from_class"], change_to_class=to_class,
                       change_from_date=request.form["from_date"], change_to_date=request.form["to_date"],
@@ -619,6 +630,7 @@ def feed_cookie(content, cookie):
     response = make_response(content)
     max_age = 60 * 60 * 24 * 120
     response.set_cookie('depart', value=str(cookie * 810893), max_age=max_age)
+    response.set_cookie('last_seen', value=datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S"), max_age=max_age)
     return response
 
 

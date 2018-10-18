@@ -1,9 +1,9 @@
 {% extends "layout.html"%}
 
 {% block inner_nav %}
-    <ul class="nav navbar-nav">
-        <li><a href="/">Multi</a></li>
-    </ul>
+<ul class="nav navbar-nav">
+    <li><a href="/">Multi</a></li>
+</ul>
 {% endblock %}
 
 {% block inner_content %}
@@ -130,72 +130,77 @@
 
     </div>
 </form>
+{% if new %}
+<div class="alert alert-info">
+    新しい時間割変更があります
+</div>
+{% endif %}
 <div class="table-responsive">
     <table class="table table-striped" style="font-size: 10pt;">
         <thead>
         <tr>
-                <th>対象クラス</th>
-                <th>変更日時</th>
-                <th>変更科目</th>
-                <th>備考</th>
+            <th>対象クラス</th>
+            <th>変更日時</th>
+            <th>変更科目</th>
+            <th>備考</th>
             {% if current_user.is_authenticated %}
-                <th>公開</th>
-                <th>編集</th>
+            <th>公開</th>
+            <th>編集</th>
             {% endif %}
         </tr>
         </thead>
         <tbody>
         {% for art in page%}
         {% with pri = prim(art.target_depart) %}
-            {% if art.change_from_date != art.change_to_date or art.change_from_time != art.change_to_time %}
-                <tr>
-                        {% if art.target_depart != 1 %}
-                            <td>{{", ".join(list(map(lambda_ , pri)))}}</td>
-                        {% else %}
-                            <td>指定なし</td>
-                        {% endif %}
-                        <td>{{(art.change_from_date[5:] + "(" + "月火水木金土日"[datetime.date(*list(map(int
-                            ,art.change_from_date.split("-")))).weekday()] + ")"  +  ": " + art.change_to_time + "限" ) if art.change_from_date else "休講"}}
-                        </td>
-                        <td>
-                            {{art.change_to_class + "(" + art.change_to_teacher + ")" if art.change_to_class
-                            else "なし"}}
-                        </td>
-                        <td>{{art.remark if art.remark else "なし"}}</td>
-                    {% if current_user.is_authenticated %}
-                    <td>{% if art.published == 1 %}はい{% else %}いいえ{% endif %}</td>
-                    {% if current_user.is_authenticated and art.contributor==current_user.id %}
-
-                            <td><a href="/edit/{{art.changeid}}">編集</a></td>
-                    {% endif %}
-                    {% endif %}
-                </tr>
+        {% if art.change_from_date != art.change_to_date or art.change_from_time != art.change_to_time %}
+        <tr>
+            {% if art.target_depart != 1 %}
+            <td>{{", ".join(list(map(lambda_ , pri)))}}</td>
+            {% else %}
+            <td>指定なし</td>
             {% endif %}
-            <tr>
-                {% if art.target_depart != 1 %}
-                    <td>{{", ".join(list(map(lambda_ , pri)))}}</td>
-                {% else %}
-                    <td>指定なし</td>
-                {% endif %}
-                <td>{{(art.change_to_date[5:] + "(" + "月火水木金土日"[datetime.date(*list(map(int
-                    ,art.change_to_date.split("-")))).weekday()] + ")" +  ": " + art.change_from_time + "限" ) if art.change_to_date
-                    else "休講"}}
-                </td>
-                <td>{{art.change_from_class+ "(" + art.change_from_teacher + ")" if
-                    art.change_from_class else "なし"}}
-                </td>
-                <td>{{art.remark if art.remark else "なし"}}</td>
+            <td>{{(art.change_from_date[5:] + "(" + "月火水木金土日"[datetime.date(*list(map(int
+                ,art.change_from_date.split("-")))).weekday()] + ")" + ": " + art.change_to_time + "限" ) if
+                art.change_from_date else "休講"}}
+            </td>
+            <td>
+                {{art.change_to_class + "(" + art.change_to_teacher + ")" if art.change_to_class
+                else "なし"}}
+            </td>
+            <td>{{art.remark if art.remark else "なし"}}</td>
             {% if current_user.is_authenticated %}
-                <td>{% if art.published == 1 %}はい{% else %}いいえ{% endif %}</td>
-                {% if current_user.is_authenticated and art.contributor==current_user.id %}
+            <td>{% if art.published == 1 %}はい{% else %}いいえ{% endif %}</td>
+            {% if current_user.is_authenticated and art.contributor==current_user.id %}
 
-                        <td><a href="/edit/{{art.changeid}}">編集</a></td>
-                {% endif %}
+            <td><a href="/edit/{{art.changeid}}">編集</a></td>
+            {% endif %}
+            {% endif %}
+        </tr>
+        {% endif %}
+        <tr>
+            {% if art.target_depart != 1 %}
+            <td>{{", ".join(list(map(lambda_ , pri)))}}</td>
+            {% else %}
+            <td>指定なし</td>
+            {% endif %}
+            <td>{{(art.change_to_date[5:] + "(" + "月火水木金土日"[datetime.date(*list(map(int
+                ,art.change_to_date.split("-")))).weekday()] + ")" + ": " + art.change_from_time + "限" ) if
+                art.change_to_date
+                else "休講"}}
+            </td>
+            <td>{{art.change_from_class+ "(" + art.change_from_teacher + ")" if
+                art.change_from_class else "なし"}}
+            </td>
+            <td>{{art.remark if art.remark else "なし"}}</td>
+            {% if current_user.is_authenticated %}
+            <td>{% if art.published == 1 %}はい{% else %}いいえ{% endif %}</td>
+
+            <td><a href="/edit/{{art.changeid}}">編集</a></td>
 
 
             {% endif %}
 
-            </tr>
+        </tr>
         {% endwith %}
         {% endfor%}
         </tbody>
@@ -203,5 +208,5 @@
     {% if not page %}
     <p class="noentry">No Entry Found</p>
     {% endif %}
-    </div>
+</div>
 {% endblock %}
