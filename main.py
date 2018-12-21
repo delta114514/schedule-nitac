@@ -1,159 +1,67 @@
 # -*- coding: utf-8 -*-
 
-import os
 import hashlib
-import datetime
 import random
 import secrets
 import smtplib
-import re
 
 from email import message
 from collections import defaultdict
-from itertools import accumulate
+from itertools import compress
 from threading import Thread
 
-from flask import Flask, flash, redirect, render_template, request, send_from_directory, jsonify, make_response, abort
-from flask_login import login_user, logout_user, LoginManager, UserMixin, login_required, current_user
-from flask_sqlalchemy import SQLAlchemy
-from flask_bootstrap import Bootstrap
-
-
-JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
-today = datetime.datetime.now(JST)
-dat = {2: '1M', 3: '1E', 5: '1C', 7: '1A', 11: '2M', 13: '2E', 17: '2C', 19: '2A', 23: '3M', 29: '3E',
-       31: '3C', 37: '3A', 41: '4M', 43: '4EJ', 47: '4ED', 53: '4C', 59: '4A', 61: '5M', 67: '5EJ',
-       71: '5ED', 73: '5C', 79: '5A', 83: '1A.ME', 89: '1A.CA', 97: '2A.ME', 101: '2A.CA'}
-dat_rev = {'1M': 2, '1E': 3, '1C': 5, '1A': 7, '2M': 11, '2E': 13, '2C': 17, '2A': 19, '3M': 23, '3E': 29, '3C': 31,
-           '3A': 37, '4M': 41, '4EJ': 43, '4ED': 47, '4C': 53, '4A': 59, '5M': 61, '5EJ': 67, '5ED': 71, '5C': 73,
-           '5A': 79, '1A.ME': 83, '1A.CA': 89, '2A.ME': 97, '2A.CA': 101, "全体": 1}
-all_set = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101}
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
-app.config['JSON_AS_ASCII'] = False
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "/manage"
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
-db = SQLAlchemy(app)
-bootstrap = Bootstrap(app)
-
-token_re = re.compile(r"mail/unsub/.+")
+from db_model import *
+from general import *
 
 with open("password", "r") as f:
-    pass1, pass2, pass3, mail_pass = f.read().split()
+    proposal_pass, count_pass, teacher_create_pass, clerk_create_pass, mail_pass, jwt_pass = f.read().split()
 
 
-class View(db.Model):
-    __tablename__ = "view"
-    url = db.Column(db.String(64), primary_key=True)
-    value = db.Column(db.Integer)
-
-    def __init__(self, url, value):
-        self.url = url
-        self.value = value
+def int2bin(n: int) -> str:
+    try:
+        return format(n, "027b")
+    except:
+        return "1"*27
 
 
-class Teacher(UserMixin, db.Model):
-    __tablename__ = 'teachers'
-    id = db.Column(db.Integer, primary_key=True)
-    userid = db.Column(db.String(32))
-    name = db.Column(db.String(32))
-    email = db.Column(db.String(32))
-    password_hash = db.Column(db.String(128))
-
-    def __init__(self, userid, name, password_hash, email):
-        self.userid = userid
-        self.name = name
-        self.password_hash = password_hash
-        self.email = email
-
-    def is_teacher(self):
-        return True
-
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return self.id
-
-    def __repr__(self):
-        return '<Teacher %r>' % self.name
+def bin2int(n: str) -> int:
+    try:
+        return int(n, 2)
+    except:
+        return bins[0]
 
 
-class Entry(db.Model):
-    __tablename__ = 'entry'
-    changeid = db.Column(db.Integer, primary_key=True)
-    change_from_class = db.Column(db.String(32))
-    change_to_class = db.Column(db.String(32))
-    change_from_date = db.Column(db.String(32))
-    change_to_date = db.Column(db.String(32))
-    change_from_time = db.Column(db.String(32))
-    change_to_time = db.Column(db.String(32))
-    change_from_teacher = db.Column(db.String(32))
-    change_to_teacher = db.Column(db.String(32))
-    target_depart = db.Column(db.Integer)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.now(JST))
-    published = db.Column(db.Integer)
-    remark = db.Column(db.String(256))
-    contributor = db.Column(db.Integer)
-
-    def __init__(self, changeid=999, change_from_class="", change_to_class="", change_from_date="", change_to_date="",
-                 change_from_time="", change_to_time="", target_depart="", remark="", contributor="",
-                 change_from_teacher="", change_to_teacher="", published=0):
-        self.changeid = changeid
-        self.change_from_class = change_from_class
-        self.change_to_class = change_to_class
-        self.change_from_date = change_from_date
-        self.change_to_date = change_to_date
-        self.change_from_time = change_from_time
-        self.change_to_time = change_to_time
-        self.target_depart = target_depart
-        self.remark = remark
-        self.contributor = contributor
-        self.published = published
-        self.change_from_teacher = change_from_teacher
-        self.change_to_teacher = change_to_teacher
+def int2classes(n: int) -> list:
+    try:
+        return list(compress(classes, map(lambda x: int(x), list(int2bin(n)))))
+    except:
+        return classes
 
 
-class Mail_verify(db.Model):
-    __tablename__ = 'mail_verify'
-    email = db.Column(db.String(8))
-    token = db.Column(db.String(64), primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.now(JST))
-    class_ = db.Column(db.Integer)
-
-    def __init__(self, email="", token="", timestamp=datetime.datetime.now(JST), class_=0):
-        self.email = email
-        self.token = token
-        self.timestamp = timestamp
-        self.class_ = class_
+def bin2classes(n: str) -> list:
+    try:
+        return list(compress(classes, map(lambda x: int(x), list(n))))
+    except:
+        return bins
 
 
-class Valid_Mails(db.Model):
-    __tablename__ = "valid_mail"
-    email = db.Column(db.String(32))
-    class_ = db.Column(db.Integer)
-    token = db.Column(db.String(32), primary_key=True)
+def int2bins(n: int) -> list:
+    try:
+        return list(compress(bins, map(lambda x: int(x), list(int2bin(n)))))
+    except:
+        return classes
 
-    def __init__(self, email, class_, token):
-        self.email = email
-        self.class_ = class_
-        self.token = token
+
+def bin2bins(n: str) -> list:
+    try:
+        return list(compress(bins, map(lambda x: int(x), list(n))))
+    except:
+        return [1] * 27
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    return Teacher.query.get(user_id)
+    return User.query.get(user_id)
 
 
 @login_manager.unauthorized_handler
@@ -167,30 +75,30 @@ def get_id(self):
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template("404.html"), 404
 
 
 @app.errorhandler(500)
 def page_not_found(e):
-    return render_template('500.html'), 500
+    return render_template("500.html"), 500
 
 
 @app.before_request
 def before_request():
     try:
-        forwarded_protocol = request.headers.get('X-Forwarded-Proto', None)
+        forwarded_protocol = request.headers.get("X-Forwarded-Proto", None)
         if forwarded_protocol is not None:
-            if forwarded_protocol == 'http':
-                new_url = request.url.replace('http', 'https', 1)
+            if forwarded_protocol == "http":
+                new_url = request.url.replace("http", "https", 1)
                 return redirect(new_url)
     except RuntimeError as e:
         pass
-    if request.path == '/count':
+    if request.path == "/count":
         return
     else:
-        result = View.query.filter(View.url.in_([request.url])).first()
+        result = ViewCount.query.get(request.url)
         if not result:
-            db.session.add(View(request.url, 1))
+            db.session.add(ViewCount(request.url, 1))
             db.session.commit()
             return
         result.value += 1
@@ -211,18 +119,18 @@ def send_verify_mail(email, token):
 ClassManager(Schedule-Nitac)
 https://schedule-nitac.mybluemix.net/
     """
-    smtp_host = 'smtp.gmail.com'
+    smtp_host = "smtp.gmail.com"
     smtp_port = 587
-    from_email = 'schedule.nitac@gmail.com'
+    from_email = "schedule.nitac@gmail.com"
     to_email = email
-    username = 'schedule.nitac@gmail.com'
+    username = "schedule.nitac@gmail.com"
     password = mail_pass
 
     msg = message.EmailMessage()
     msg.set_content(text)
-    msg['Subject'] = '【ClassManager】登録認証URL'
-    msg['From'] = from_email
-    msg['To'] = to_email
+    msg["Subject"] = "【ClassManager】登録認証URL"
+    msg["From"] = from_email
+    msg["To"] = to_email
 
     server = smtplib.SMTP(smtp_host, smtp_port)
     server.ehlo()
@@ -252,21 +160,18 @@ def send_change_mail(user, changes):
         </thead>
         <tbody>"""
     for art in changes:
+        col_bef = datetime.datetime.strptime(art.change_from_date, timestamp_str)
+        col_aft = datetime.datetime.strptime(art.change_to_date, timestamp_str)
         text += f"""
             <tr>
-    
-                {"<td>" + ", ".join(list(map(lambda x: dat[x], prime_factors(art.target_depart)))) + "</td>" if art.target_depart != 1 else "<td>全体</td>"}
+
+                {"<td>" + ", ".join(int2classes(art.target_depart)) + "</td>"}
                 <td>{"振替" if art.change_from_teacher and art.change_to_teacher else "移動" if
                     art.change_from_date and art.change_to_date else "休講"}
                 </td>
-                <td>{(art.change_from_date[5:] + "(" + "月火水木金土日"[datetime.datetime(*list(map(int
-                    ,art.change_from_date.split("-")))).weekday()] + ")" + ": " + art.change_from_time + "限" ) if
-                    art.change_from_date else "休講"}
+                <td>{"{}-{}({}):{}限".format(col_bef.month, col_bef.day, "月火水木金土日"[col_bef.weekday()], art.change_from_time) if art.change_from_date else "休講"}
                     {'⇔' if (art.change_from_teacher and art.change_to_teacher) else '→'}
-                    {(art.change_to_date[5:] + "(" + "月火水木金土日"[datetime.datetime(*list(map(int
-                    ,art.change_to_date.split("-")))).weekday()] + ")" + ": " + art.change_to_time + "限" ) if
-                    art.change_to_date
-                    else "休講"}
+                    {"{}-{}({}):{}限".format(col_aft.month, col_aft.day, "月火水木金土日"[col_aft.weekday()], art.change_to_time) if art.change_to_date else "休講"}
                 </td>
                 <td>{art.change_from_class+ "(" + art.change_from_teacher + ")" if
                     art.change_from_class else "なし"}
@@ -289,19 +194,18 @@ https://schedule-nitac.mybluemix.net/mail/unsub/{user.token}
 ClassManager(Schedule-Nitac)
 https://schedule-nitac.mybluemix.net/
     """
-    print(user.email)
-    smtp_host = 'smtp.gmail.com'
+    smtp_host = "smtp.gmail.com"
     smtp_port = 587
-    from_email = 'schedule.nitac@gmail.com'
+    from_email = "schedule.nitac@gmail.com"
     to_email = user.email
-    username = 'schedule.nitac@gmail.com'
+    username = "schedule.nitac@gmail.com"
     password = mail_pass
 
     msg = message.EmailMessage()
-    msg.set_content(text, subtype='html')
-    msg['Subject'] = '【ClassManager】本日の変更'
-    msg['From'] = from_email
-    msg['To'] = to_email
+    msg.set_content(text, subtype="html")
+    msg["Subject"] = "【ClassManager】本日の変更"
+    msg["From"] = from_email
+    msg["To"] = to_email
 
     server = smtplib.SMTP(smtp_host, smtp_port)
     server.ehlo()
@@ -313,24 +217,23 @@ https://schedule-nitac.mybluemix.net/
 
 
 def change_mail():
-    timestamp = datetime.datetime.now(JST)
-    ents = Entry.query.all()
-    sends = defaultdict(set)
+    timestamp = str(datetime.date.fromtimestamp(datetime.datetime.now(JST).timestamp()))
+    ents = Entry.query.filter(SQLAlchemy.or_(Entry.change_from_date.in_([timestamp]), Entry.change_to_date.in_([timestamp])))
+    sends = defaultdict(list)
     for ent in ents:
-        if timestamp in [datetime.datetime(*map(int, ent.change_to_date.split("-"))), datetime.datetime(*map(int, ent.change_from_date.split("-")))]:
-            for depart in prime_factors(ent.target_depart):
-                sends[depart].add(ent)
-    users = Valid_Mails.query.all()
+        for change in ents:
+            for class_ in int2bins(change.target_depart):
+                sends[class_].append(ent)
+    users = ValidMails.query.all()
+    tmp = set()
     for user in users:
-        tmp = set()
-        for depart in prime_factors(user.class_):
+        for depart in int2bins(user.class_):
             tmp |= sends[depart]
         if tmp:
             send_change_mail(user, tmp)
 
 
 def main_page(page, class_=None):
-    global dat, all_set, dat_rev
     try:
         global today
         if today < datetime.datetime.now(JST):
@@ -343,53 +246,43 @@ def main_page(page, class_=None):
         today = datetime.datetime.now(JST)
     if class_:
         try:
-            tmp = {dat_rev[class_], }
+            tmp = dat_rev[class_]
         except ValueError:
             abort(404)
     else:
-        if request.method == 'POST':
-            tmp = set()
+        if request.method == "POST":
+            tmp = 0
             for key, item in request.form.items():
                 if key[:5] == "radio":
-                    tmp.add(int(item))
+                    tmp += int(item)
             if not tmp:
-                tmp = all_set | {1}
+                tmp = bins[0]
         else:
             if current_user.is_authenticated:
-                tmp = all_set | {1}
+                tmp = bins[0]
             else:
                 try:
-                    tmp = prime_factors(intize(request.cookies))
-                except:
-                    tmp = all_set | {1}
+                    tmp = get_dep_cookie(request.cookies)
+                except Exception:
+                    tmp = bins[0]
                 if not tmp:
-                    tmp = all_set | {1}
-
+                    tmp = bins[0]
     try:
         last = request.cookies.get("last_seen")
-        print(last, Entry.query.filter(Entry.published.in_([1])).order_by(Entry.timestamp.desc()).first().timestamp)
-        if datetime.datetime(*map(int, last.split("-"))) < Entry.query.filter(Entry.published.in_([1])).order_by(
-                Entry.timestamp.desc()).first().timestamp:
+        if datetime.datetime.strptime(last, cookie_timestamp_str) < datetime.datetime.fromtimestamp(
+                Entry.query.filter(Entry.published).order_by(Entry.timestamp.desc()).first().timestamp, tz=JST):
             new = 1
         else:
-            raise ValueError
-    except:
+            new = 0
+    except Exception:
         new = 0
 
     if current_user.is_authenticated:
         p = Entry.query.order_by(Entry.target_depart).all()
     else:
-        p = Entry.query.filter(Entry.published.in_([1])).order_by(Entry.target_depart).all()
-
-    for i in p[::]:
-        if not prime_factors(i.target_depart) & tmp:
-            if i.target_depart != 1:
-                p.remove(i)
-
-    return feed_cookie(render_template(page, page=p, prim=prime_factors, dat=dat, user=Teacher,
-                                       datetime=datetime, map=map, list=list, int=int, len=len, range=range,
-                                       lambda_=lambda x: dat[x], new=new),
-                       list(accumulate(tmp, lambda x, y: x * y))[-1])
+        p = Entry.query.filter(Entry.published, Entry.target_depart.op("&")(tmp)).order_by(Entry.target_depart).all()
+    return feed_cookie(render_template(page, page=p, date_str=timestamp_str, user=User, str=str, format=format,
+                                       datetime=datetime, new=new, int2classes=int2classes), tmp)
 
 
 @app.route("/favicon.ico")
@@ -397,82 +290,111 @@ def favicon():
     return send_from_directory("static/icon", "favicon.ico")
 
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def article():
     return main_page("changes.html")
 
 
-@app.route("/<class_>", methods=['GET', 'POST'])
+@app.route("/<class_>", methods=["GET", "POST"])
 def article_class(class_):
     return main_page("changes.html", class_)
 
 
-@app.route("/one/<class_>", methods=['GET', 'POST'])
+@app.route("/one/<class_>", methods=["GET", "POST"])
 def ones_class(class_):
     return main_page("ones.html", class_)
 
 
-@app.route("/one", methods=['GET', 'POST'])
+@app.route("/one", methods=["GET", "POST"])
 def ones():
     return main_page("ones.html")
 
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
+@app.route("/register/teacher", methods=["GET", "POST"])
+def register_teacher():
     error = False
 
-    if request.method == 'GET':
-        return render_template('register.html')
+    if request.method == "GET":
+        return render_template("register_teacher.html")
 
-    user = Teacher(userid=request.form['userid'], name=str(request.form['name']),
-                   password_hash=str(hashlib.sha256(b"%a" % str(request.form['password'])).digest()),
-                   email=str(request.form['email']))
+    user = User(name=str(request.form["name"]),
+                password_hash=str(hashlib.sha256(b"%a" % str(request.form["password"])).digest()),
+                email=str(request.form["email"]), teacher=True)
 
-    adminpass = str(request.form['adminpass'])
+    adminpass = str(request.form["adminpass"])
 
-    if adminpass != pass3:
-        flash('Admin pass is not correct')
+    if adminpass != teacher_create_pass:
+        flash("Admin-pass is not correct")
         error = True
     if not request.form["password"]:
-        flash('Input Password')
+        flash("Input Password")
         error = True
     if request.form["password"] != request.form["conf_password"]:
-        flash('The password confirmation does not match.')
+        flash("The password confirmation does not match.")
         error = True
-    if Teacher.query.filter(Teacher.userid.in_([request.form['userid']])).first() not in [user, None]:
-        flash("The TeacherID is already used")
-        error = True
-    if Teacher.query.filter(Teacher.email.in_([request.form['email']])).first() not in [user, None]:
-        flash("The Email address is already used")
+    if User.query.filter(User.email.in_([request.form["email"]])).first() not in [user, None]:
+        flash("The Email address is already in use")
         error = True
     if error:
-        return redirect('/register')
+        return redirect("/register/teacher")
 
     db.session.add(user)
     db.session.commit()
-    login_user(Teacher.query.filter(Teacher.userid.in_([request.form['userid']])).first(), remember=True)
+    login_user(user, remember=True)
 
-    return redirect('/teacher')
+    return redirect("/")
 
 
-@app.route('/login', methods=["GET", "POST"])
+@app.route("/register/clerk", methods=["GET", "POST"])
+def register_clerk():
+    error = False
+
+    if request.method == "GET":
+        return render_template("register_clerk.html")
+
+    user = User(name=str(request.form["name"]),
+                password_hash=str(hashlib.sha256(b"%a" % str(request.form["password"])).digest()),
+                email=str(request.form["email"]), teacher=False)
+
+    adminpass = str(request.form["adminpass"])
+
+    if adminpass != clerk_create_pass:
+        flash("Admin-pass is not correct")
+        error = True
+    if not request.form["password"]:
+        flash("Input Password")
+        error = True
+    if request.form["password"] != request.form["conf_password"]:
+        flash("The password confirmation does not match.")
+        error = True
+    if User.query.filter(User.email.in_([request.form["email"]])).first() not in [user, None]:
+        flash("The Email address is already in use")
+        error = True
+    if error:
+        return redirect("/register/clerk")
+
+    db.session.add(user)
+    db.session.commit()
+    login_user(user, remember=True)
+
+    return redirect("/")
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'GET':
+    if request.method == "GET":
         return render_template("login.html")
 
-    POST_USERID = str(request.form['userid'])
-    POST_PASSWORD = str(hashlib.sha256(b"%a" % str(request.form['password'])).digest())
+    POST_EMAIL = str(request.form["email"])
+    POST_PASSWORD = str(hashlib.sha256(b"%a" % str(request.form["password"])).digest())
 
-    result = Teacher.query.filter(Teacher.userid.in_([POST_USERID]),
-                                  Teacher.password_hash.in_([POST_PASSWORD])).first()
-    if not result:
-        result = Teacher.query.filter(Teacher.email.in_([POST_USERID]),
-                                      Teacher.password_hash.in_([POST_PASSWORD])).first()
+    result = User.query.filter(User.email.in_([POST_EMAIL]),
+                               User.password_hash.in_([POST_PASSWORD])).first()
     if result:
         login_user(result, remember=True)
         return redirect("/")
     else:
-        flash('Invalid authentication')
+        flash("Invalid authentication")
         return redirect("/login")
 
 
@@ -487,14 +409,6 @@ def logout():
 def mail_request():
     if request.method == "GET":
         return render_template("mail_request.html")
-    timestamp = datetime.datetime.now(JST)
-    try:
-        if Mail_verify.query.first():
-            if Mail_verify.query.first().timestamp.replace(tzinfo=JST) < timestamp - datetime.timedelta(0, 1800):
-                Mail_verify.query.filter(Mail_verify.timestamp.replace(tzinfo=JST) < timestamp - datetime.timedelta(0, 1800)).delete()
-                db.session.commit()
-    except AttributeError:
-        pass
     error = 0
     if not request.form["email"]:
         flash("emailアドレスを入力してください")
@@ -502,23 +416,19 @@ def mail_request():
     if len(request.form) < 2:
         flash("クラスを選択して下さい")
         error = 1
-    if Valid_Mails.query.filter(Valid_Mails.email.in_([request.form["email"]])).first():
+    if ValidMails.query.filter(ValidMails.email.in_([request.form["email"]])).first():
         flash("すでに登録されています")
-        error = 1
-    if Mail_verify.query.filter(Mail_verify.email.in_([request.form["email"]])).first():
-        flash("すでにメールをお送りしています")
         error = 1
     if error:
         return render_template("mail_request.html")
-    token = secrets.token_urlsafe(32).lower()
-    send_verify_mail(token=token, email=request.form["email"])
-    class_ = 1
+    class_ = 0
     for key, value in request.form.items():
-        if key.startswith("radio"):
-            class_ *= int(value)
-    user = Mail_verify(email=request.form["email"], token=token, timestamp=timestamp, class_=class_)
-    db.session.add(user)
-    db.session.commit()
+        if key != "email":
+            class_ += int(value)
+    token = jwt.encode({"email": request.form["email"], "class": class_,
+                        "expired": (datetime.datetime.now(JST) + datetime.timedelta(0, 1800)).timestamp()}, jwt_pass,
+                       algorithm="HS256").decode()
+    send_verify_mail(token=token, email=request.form["email"])
 
     return render_template("mail_request_fin.html")
 
@@ -527,14 +437,12 @@ def mail_request():
 def mail_token(token):
     timestamp = datetime.datetime.now(JST)
     try:
-        if Mail_verify.query.first().timestamp < timestamp - datetime.timedelta(0, 1800):
-            db.session.delete(Mail_verify.query.filter(Mail_verify.timestamp < timestamp - datetime.timedelta(0, 1800)))
-            db.session.commit()
-    except AttributeError:
-        pass
-    user = Mail_verify.query.get_or_404(token)
-    va_user = Valid_Mails(email=user.email, class_=user.class_, token=secrets.token_urlsafe(32).lower())
-    db.session.delete(user)
+        dec = jwt.decode(token, jwt_pass, algorithms=["HS256"])
+    except jwt.DecodeError:
+        abort(404)
+    if datetime.datetime.now().timestamp() > float(dec["expired"]):
+        abort(404)
+    va_user = ValidMails(email=dec["email"], class_=dec["class"], token=secrets.token_urlsafe(32).lower())
     db.session.add(va_user)
     db.session.commit()
     return render_template("mail_fin.html")
@@ -542,35 +450,33 @@ def mail_token(token):
 
 @app.route("/mail/unsub/<token>")
 def mail_unsub(token):
-    user = Valid_Mails.query.get_or_404(token)
+    user = ValidMails.query.get_or_404(token)
     return render_template("mail_unsub_conf.html", user=user)
 
 
 @app.route("/mail/unsub/submit", methods=["POST"])
 def mail_unsub_fin():
     token = token_re.search(request.referrer)[0][11:]
-    user = Valid_Mails.query.get_or_404(token)
+    user = ValidMails.query.get_or_404(token)
     db.session.delete(user)
     db.session.commit()
     return render_template("mail_unsub_fin.html")
 
 
-@app.route('/teacher', methods=['GET', 'POST'])
+@app.route("/edit", methods=["GET", "POST"])
 @login_required
 def upload():
     error = False
-    allen = 0
     del_lim()
-    if request.method == 'POST':
-        tmp = 1
+    if request.method == "POST":
+        tmp = 0
         for key, item in request.form.items():
             if key == "all":
-                tmp = 1
-                allen = 1
+                tmp = bins[0]
                 break
             if key[:5] == "radio":
-                tmp *= int(item)
-        if tmp == 1 and not allen:
+                tmp += int(item)
+        if not tmp:
             flash("クラスを選択してください")
             error = True
         if not (request.form["to_date"] or request.form["from_date"]):
@@ -582,9 +488,9 @@ def upload():
         if not (request.form["to_time"] or request.form["from_time"]):
             flash("限目を入力してください")
             error = True
-        password_hash = str(hashlib.sha256(b"%a" % str(request.form['password'])).digest())
-        result = Teacher.query.filter(Teacher.userid.in_([current_user.userid]),
-                                      Teacher.password_hash.in_([password_hash])).first()
+        password_hash = str(hashlib.sha256(b"%a" % str(request.form["password"])).digest())
+        result = User.query.filter(User.email.in_([current_user.email]),
+                                   User.password_hash.in_([password_hash])).first()
         if not result:
             flash("パスワードを間違っています")
             error = True
@@ -603,21 +509,20 @@ def upload():
                       remark=request.form["remark"], contributor=current_user.id, target_depart=tmp, changeid=id_)
         db.session.add(entry)
         db.session.commit()
-        return redirect('/')
+        return redirect("/")
     return render_template("uploadpage.html")
 
 
-@app.route('/editself', methods=['GET', 'POST'])
+@app.route("/editself", methods=["GET", "POST"])
 @login_required
 def editself():
     if request.method == "GET":
         return render_template("editself_tea.html")
     if request.form["password"] == request.form["conf_password"] and str(hashlib.sha256(
-            b'%a' % str(request.form['password'])).digest()) == current_user.password_hash:
+            b"%a" % str(request.form["password"])).digest()) == current_user.password_hash:
         current_user.name = request.form["name"]
         current_user.email = request.form["email"]
-        current_user.userid = request.form["userid"]
-        if not request.form["name"] or not request.form["email"] or not request.form["userid"]:
+        if not request.form["name"] or not request.form["email"]:
             flash("失敗")
             return render_template("editself_tea.html")
         db.session.commit()
@@ -670,29 +575,26 @@ def json_depart(depart):
         except:
             del_lim()
             today = datetime.datetime.now(JST)
-        p = Entry.query.all()
+        tmp = sum([dat_rev[class_] for class_ in depart.upper().replace(" ", "").split(";")])
+        p = Entry.query.filter(Entry.published, Entry.target_depart.op("&")(tmp)).order_by(Entry.target_depart).all()
 
-        dat_rev = {value: key for key, value in dat.items()}
-
-        tmp = set(dat_rev[i] for i in depart.upper().replace(" ", "").split(";"))
-        over = defaultdict(list)
-        for i in p[::]:
-            if not prime_factors(i.target_depart) & tmp:
-                p.remove(i)
-            for j in tmp:
-                if j in prime_factors(i.target_depart):
-                    over[dat[j]] += [i]
         json = {
             "all_match": {str(i): json_it(m) for i, m in enumerate(p)
                           }
         }
         json["all_match"]["count"] = len(p)
-        for key, value in over.items():
-            json[key] = {str(k): json_it(m) for k, m in enumerate(value)}
-            json[key]["count"] = len(value)
+        for class_ in int2classes(tmp):
+            json[class_] = dict()
+            json[class_]["count"] = 0
+        for change in p:
+            if change.target_depart & tmp:
+                for class_ in int2classes(change.target_depart & tmp):
+                    json[class_][str(len(json[class_]))] = json_it(change)
+                    json[class_]["count"] += 1
+        print(json)
         return jsonify(json)
-    except:
-        abort(500)
+    except Exception as e:
+        raise
 
 
 @app.route("/json/reference")
@@ -700,56 +602,60 @@ def api_reference():
     return render_template("reference.html")
 
 
-@app.route("/edit/<int:num>", methods=['GET', 'POST'])
+@app.route("/edit/<int:num>", methods=["GET", "POST"])
 @login_required
 def edit(num=0):
     p = Entry.query.filter(Entry.changeid.in_([num])).first()
     if not p:
         return render_template("404.html")
     global dat
-    if request.method == 'POST':
-        edited = 0
-        tmp = 1
-        for key, item in request.form.items():
-            if key == "all":
-                edited = 1
-                break
-            if key[:5] == "radio":
-                tmp *= int(item)
-        if tmp == 1 and not edited:
-            tmp = p.target_depart
-        if p.contributor != current_user.id:
-            return render_template("404.html")
-        p.target_depart = tmp
-        p.change_from_date = request.form["from_date"]
-        p.change_from_class = request.form["from_class"]
-        p.change_from_time = request.form["from_time"]
-        p.change_from_teacher = request.form["from_teacher"]
-        p.change_to_date = request.form["to_date"]
-        p.change_to_class = request.form["to_class"]
-        p.change_to_time = request.form["to_time"]
-        p.change_to_teacher = request.form["to_teacher"]
-        p.remark = request.form["remark"]
+    if current_user.is_teacher():
+        if request.method == "POST":
+            class_ = 0
+            for key, value in request.form.items():
+                if key == "all":
+                    class_ = bins[0]
+                    break
+                if key[:5] == "radio":
+                    class_ += int(value)
+            if class_:
+                p.target_depart = class_
+            if p.contributor != current_user.id:
+                abort(404)
+            p.change_from_date = request.form["from_date"]
+            p.change_from_class = request.form["from_class"]
+            p.change_from_time = request.form["from_time"]
+            p.change_from_teacher = request.form["from_teacher"]
+            p.change_to_date = request.form["to_date"]
+            p.change_to_class = request.form["to_class"]
+            p.change_to_time = request.form["to_time"]
+            p.change_to_teacher = request.form["to_teacher"]
+            p.remark = request.form["remark"]
+            if str(request.form["delete"]) == str(request.form["del_string"]):
+                db.session.delete(p)
+                db.session.commit()
+                return redirect("/")
+            db.session.commit()
+        return render_template("edit.html", page=p, dat=dat, del_string=random.randint(1000, 9999),
+                               int2classes=int2classes, teacher="", clerk="disabled")
+    if request.method == "POST":
+        p.changeid = request.form["number"]
         p.published = request.form["published"]
         p.timestamp = datetime.datetime.now(JST)
-        if str(request.form["delete"]) == "いいよ！こいよ！":
+        if str(request.form["delete"]) == str(request.form["del_string"]):
             db.session.delete(p)
             db.session.commit()
             return redirect("/")
-
-        tmp = Entry.query.filter(Entry.changeid.in_([int(request.form["number"])])).first()
-        if tmp and tmp != p:
-            flash("管理ナンバーが重複しています")
-        else:
-            p.changeid = int(request.form["number"])
-            db.session.commit()
-    return render_template('edit.html', page=p, prim=prime_factors, dat=dat)
+        p.publisher = current_user.id
+        db.session.commit()
+    return render_template("edit.html", page=p, dat=dat, del_string=random.randint(1000, 9999),
+                           int2classes=int2classes, teacher="disabled", clerk="")
 
 
 @app.route("/<passw>/count")
 def count(passw):
-    if passw == pass2:
-        return render_template("count.html", que=View.query.all())
+    if passw == count_pass:
+        return render_template("count.html", que=ViewCount.query.all())
     else:
         return redirect("404.html")
 
@@ -759,23 +665,24 @@ def proposal():
     if request.method == "GET":
         return render_template("proposal.html")
     else:
-        with open("art.txt", "a") as file:
-            file.write(request.form["string"].replace("[EOA]", "") + "[EOA]")
+        prop = Proposal(body=request.form["string"], ip=request.remote_addr)
+        db.session.add(prop)
+        db.session.commit()
         flash("メッセージが投稿されました。")
         return render_template("proposal.html")
 
 
 @app.route("/proposals/<passw>")
 def proposals(passw):
-    if passw == pass1:
-        try:
-            with open("art.txt", "r") as file:
-                tmp = file.read().split("[EOA]")[:-1]
-            txt = "<table border=\"1\" width=\"400\"><tr><th>body</th></tr><tr><td>" + "</td></tr><tr><td>".join(
-                tmp) + "</tb></tr></table>"
-            return txt
-        except:
-            return "no proposals"
+    if passw == proposal_pass:
+        txt = "<table border=\"1\" width=\"400\"><tr><th>timestamp</th><th>ip</th><th>body</th></tr>"
+        for prop in Proposal.query.all():
+            print(prop, Proposal.query.all())
+            txt += "<tr><td>{}</td><td>{}</td><td>{}</td></tr>".format(prop.timestamp, prop.ip, prop.body)
+        txt += "</table>"
+        return txt
+    else:
+        abort(404)
 
 
 @app.route("/flush")
@@ -785,75 +692,75 @@ def flush():
     return "flushed!"
 
 
-@app.route('/<passw>/static/<filename>')
+@app.route("/<passw>/static/<filename>")
 def static_dir(passw, filename):
-    if passw == pass2:
-        return send_from_directory('static', filename)
+    if passw == count_pass:
+        return send_from_directory("static", filename)
     else:
         return redirect("404.html")
 
 
-@app.route('/<passw>/image/<filename>')
+@app.route("/<passw>/image/<filename>")
 def image_dir(passw, filename):
-    if passw == pass2:
-        return send_from_directory('image', filename)
+    if passw == count_pass:
+        return send_from_directory("image", filename)
     else:
         return redirect("404.html")
 
 
-@app.route('/file/<filename>')
+@app.route("/file/<filename>")
 @login_required
 def files(filename):
     return send_from_directory("./", filename)
 
 
-@app.route('/to_pdf/<id_>')
+@app.route("/to_pdf/<id_>")
 def to_pdf(id_):
     col = {"m": "#d6331d", "e": "#ffac3f", "c": "#6da5ff", "a": "#8fb70b", "all": "#250d00"}
     art = Entry.query.filter(Entry.changeid.in_([id_])).first()
     if not art:
         abort(404)
     depart = art.target_depart
-    if depart == 2021:
+    if depart == 24576:
         depart = "4E"
         color = col["e"]
-    elif depart == 4757:
+    elif depart == 786432:
         depart = "5E"
         color = col["e"]
-    elif depart == 210:
+    elif depart == 15:
         depart = "1年"
         color = col["all"]
-    elif depart == 46189:
+    elif depart == 240:
         depart = "2年"
         color = col["all"]
-    elif depart == 765049:
+    elif depart == 3840:
         depart = "3年"
         color = col["all"]
-    elif depart == 259106347:
+    elif depart == 126976:
         depart = "4年"
         color = col["all"]
-    elif depart == 1673450759:
+    elif depart == 4063232:
         depart = "5年"
         color = col["all"]
-    elif depart == 7387:
+    elif depart == 12582912:
         depart = "専攻科1年"
         color = col["all"]
-    elif depart == 9797:
+    elif depart == 50331648:
         depart = "専攻科2年"
         color = col["all"]
-    elif depart == 3217644767340672907899084554130:
+    elif depart == 4194303:
         depart = "本科生"
         color = col["all"]
-    elif depart == 232862364358497360900063316880507363070:
+    elif depart in {134217726, 67108863}:
         depart = "全学生"
         color = col["all"]
-    elif depart == 72370439:
+    elif depart == 62914560:
         depart = "専攻科生"
         color = col["all"]
     else:
-        prim = prime_factors(depart)
-        depart = ",".join(list(map(lambda x: dat[x], prim)))
-        if len(prim) != 1:
+        dep = int2classes(depart)
+        depart = ",".join(dep)
+        if len(dep) != 1:
             color = col["all"]
         else:
             color = col[depart[-1].lower()]
@@ -876,12 +783,12 @@ def to_pdf(id_):
 def feed_cookie(content, cookie):
     response = make_response(content)
     max_age = 60 * 60 * 24 * 120
-    response.set_cookie('depart', value=str(cookie * 810893), max_age=max_age)
-    response.set_cookie('last_seen', value=datetime.datetime.now(JST).strftime("%Y-%m-%d-%H-%M-%S"), max_age=max_age)
+    response.set_cookie("depart", value=str(cookie), max_age=max_age)
+    response.set_cookie("last_seen", value=datetime.datetime.now(JST).strftime("%Y-%m-%d-%H-%M-%S"), max_age=max_age)
     return response
 
 
-def intize(cookie):
+def get_dep_cookie(cookie):
     return int(cookie.get("depart"))
 
 
@@ -892,15 +799,15 @@ def json_it(entry):
             "class": entry.change_from_class,
             "date": entry.change_from_date,
             "time": entry.change_from_time,
-            "teacher": entry.change_from_teacher
+            "User": entry.change_from_teacher
         },
         "to": {
             "class": entry.change_to_class,
             "date": entry.change_to_date,
             "time": entry.change_to_time,
-            "teacher": entry.change_to_teacher
+            "User": entry.change_to_teacher
         },
-        "depart": ";".join([dat[i] for i in prime_factors(entry.target_depart)]),
+        "depart": ";".join(int2classes(entry.target_depart)),
         "remark": entry.remark
     }
     return json
@@ -918,26 +825,15 @@ def del_lim():
             to = datetime.datetime(*list(map(int, ent.change_to_date.split("-"))), tzinfo=JST)
         except:
             to = datetime.datetime(1, 1, 1, tzinfo=JST)
-        if max(bef, to) < (datetime.datetime.now(JST) - datetime.timedelta(1)):
+        if max(bef, to) < datetime.datetime.now(JST):
             db.session.delete(ent)
             deleted = True
     if deleted:
         db.session.commit()
 
 
-def prime_factors(n):
-    global all_set
-    if not n:
-        return set()
-    i = 2
-    factors = []
-    for i in all_set:
-        if not n % i:
-            factors.append(i)
-    return set(factors)
-
-
-
 if __name__ == "__main__":
+    if not os._exists("database.db"):
+        db.create_all()
     app.secret_key = os.urandom(12)
-    app.run(debug=False, host='0.0.0.0', port=8888, threaded=True)
+    app.run(debug=False, host="0.0.0.0", port=8888, threaded=True)

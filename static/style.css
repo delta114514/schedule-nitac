@@ -244,3 +244,11 @@ i {
     margin: 20px;
 }
 
+.cool-input {
+    color: #6b6b6b;
+    width: 100%;
+    padding: 3px 3px;
+    margin: 3px 0;
+    box-sizing: border-box;
+}
+

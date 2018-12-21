@@ -10,19 +10,19 @@
             </div>
             <div class="login-form">
                 <div class="control-group">
-                    <input type="text" class="login-field" value="" placeholder="UserID or Email address"
-                           name="userid">
+                    <input type="text" class="login-field cool-input" value="" placeholder="Email address"
+                           name="email">
                     <label class="login-field-icon fui-user" for="login-name"></label>
                 </div>
                 <div class="control-group">
-                    <input type="password" class="login-field" value="" placeholder="password" name="password">
+                    <input type="password" class="login-field cool-input" value="" placeholder="password" name="password">
                     <label class="login-field-icon fui-lock" for="login-pass"></label>
                 </div>
                 {% with messages = get_flashed_messages() %}
                 {% if messages %}
                 <div class="alert alert-danger" role="alert">
                     <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-                    <strong>There were errors during registration</strong>
+                    <strong>There were errors during authentication</strong>
                     {% for message in messages %}
                     <h4>{{ message }}</h4>
                     {% endfor %}
@@ -33,7 +33,7 @@
                 <br>
             </div>
         </div>
-        <h3 style="font-size: 1.3em; text-align: center"><a href="/register" style="text-align: center;">登録</a></h3>
+        <h3 style="font-size: 1.3em; text-align: center">登録: <a href="/register/teacher" style="text-align: center;">教員</a> <a href="/register/clerk" style="text-align: center;">事務員</a></h3>
     </div>
 </form>
 

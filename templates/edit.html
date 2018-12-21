@@ -14,7 +14,7 @@
         <div class="col-md-9 personal-info">
             <div class="container">
 
-                    {% for class in prim(page.target_depart) %} {{dat[class]}} {% endfor %}
+                    {{ ", ".join(int2classes(page.target_depart)) }}
                 <div class="row">
                     <table class="table table-bordered">
                         <tr>
@@ -22,7 +22,7 @@
                                 <h3>全体</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="all" value="1"> 全体</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="all" value="67108863"> 全体</label>
                             </td>
                         </tr>
                     </table>
@@ -34,16 +34,16 @@
                                 <h3>1年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio1" value="2"> 1M</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio1" value="1"> 1M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio2" value="3"> 1E</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio2" value="2"> 1E</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio3" value="5"> 1C</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio3" value="4"> 1C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio4" value="7"> 1A</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio4" value="8"> 1A</label>
                             </td>
                         </tr>
                     </table>
@@ -56,16 +56,16 @@
                                 <h3>2年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio5" value="11"> 2M</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio5" value="16"> 2M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio6" value="13"> 2E</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio6" value="32"> 2E</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio7" value="17"> 2C</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio7" value="64"> 2C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio8" value="19"> 2A</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio8" value="128"> 2A</label>
                             </td>
                         </tr>
                     </table>
@@ -78,16 +78,16 @@
                                 <h3>3年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio9" value="23"> 3M</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio9" value="256"> 3M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio10" value="29"> 3E</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio10" value="512"> 3E</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio11" value="31"> 3C</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio11" value="1024"> 3C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio12" value="37"> 3A</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio12" value="2048"> 3A</label>
                             </td>
                         </tr>
                     </table>
@@ -100,19 +100,19 @@
                                 <h3>4年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio13" value="41"> 4M</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio13" value="4096"> 4M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio14" value="43"> 4EJ</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio14" value="8192"> 4EJ</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio15" value="47"> 4ED</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio15" value="16384"> 4ED</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio16" value="53"> 4C</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio16" value="32768"> 4C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio17" value="59"> 4A</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio17" value="65536"> 4A</label>
                             </td>
                         </tr>
                     </table>
@@ -125,19 +125,19 @@
                                 <h3>5年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="61"> 5M</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio18" value="131072"> 5M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="67"> 5EJ</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio19" value="262144"> 5EJ</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="71"> 5ED</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio20" value="524288"> 5ED</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="73"> 5C</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio21" value="1048576"> 5C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio22" value="79"> 5A</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio22" value="2097152"> 5A</label>
                             </td>
                         </tr>
                     </table>
@@ -149,16 +149,16 @@
                                 <h3>専攻科</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="83"> 1A.ME</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio18" value="4194304"> 1A.ME</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="89"> 1A.CA</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio19" value="8388608"> 1A.CA</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="97"> 2A.ME</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio20" value="16777216"> 2A.ME</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="101"> 2A.CA</label>
+                                <label class="checkbox-inline"><input type="checkbox" {{ teacher }} name="radio21" value="33554432"> 2A.CA</label>
                             </td>
                         </tr>
                     </table>
@@ -166,28 +166,28 @@
                 <div class="form-group">
                     <label class="col-lg-3 control-label">管理ナンバー</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="number" value="{{page.changeid}}">
+                        <input class="form-control" type="text" {{ clerk }} name="number" value="{{page.changeid}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更元の日付 (空きコマなら必要ありません)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="date" name="from_date" value="{{page.change_from_date}}">
+                        <input class="form-control" type="date" {{ teacher }} name="from_date" value="{{page.change_from_date}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更元の限目 (空きコマなら必要ありません)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="from_time" value="{{page.change_from_time}}">
+                        <input class="form-control" type="text" {{ teacher }} name="from_time" value="{{page.change_from_time}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更元の授業 (空きコマなら必要ありません)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="from_class" value="{{page.change_from_class}}">
+                        <input class="form-control" type="text" {{ teacher }} name="from_class" value="{{page.change_from_class}}">
                     </div>
                 </div>
 
@@ -195,58 +195,59 @@
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更元の教員</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="from_teacher" value="{{page.change_from_teacher}}">
+                        <input class="form-control" type="text" {{ teacher }} name="from_teacher" value="{{page.change_from_teacher}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更先の日付 (休校なら必要ありません)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="date" name="to_date" value="{{page.change_to_date}}">
+                        <input class="form-control" type="date" {{ teacher }} name="to_date" value="{{page.change_to_date}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更先の限目 (休校なら必要ありません)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="to_time" value="{{page.change_to_time}}">
+                        <input class="form-control" type="text" {{ teacher }} name="to_time" value="{{page.change_to_time}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更先の授業 (休校なら必要ありません)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="to_class" value="{{page.change_to_class}}">
+                        <input class="form-control" type="text" {{ teacher }} name="to_class" value="{{page.change_to_class}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">変更先の教員</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="to_teacher" value="{{page.change_to_teacher}}">
+                        <input class="form-control" type="text" {{ teacher }} name="to_teacher" value="{{page.change_to_teacher}}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-lg-3 control-label">備考 (無くてもかまいません)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="remark" value="{{page.remark}}">
+                        <input class="form-control" type="text" {{ teacher }} name="remark" value="{{page.remark}}">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="col-lg-3 control-label">公開設定(1が公開。それ以外は非公開)</label>
+                    <label class="col-lg-3 control-label">公開設定(Trueが公開。Falseが非公開)</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" name="published" value="{{page.published}}">
+                        <input class="form-control" type="text" {{ clerk }} name="published" value="{{page.published}}">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="col-lg-3 control-label">削除する場合、以下に"いいよ！こいよ！"と入力してください</label>
+                    <label class="col-lg-3 control-label">削除する場合、以下に"{{ del_string }}"と入力してください</label>
                     <div class="col-lg-8">
                         <input class="form-control" type="text" name="delete">
                     </div>
                 </div>
+                <input value="{{ del_string }}" type="hidden" name="del_string">
 
                 <input type="submit" value="submit" class="btns btn-primary btn-large btn-block">
             </div>

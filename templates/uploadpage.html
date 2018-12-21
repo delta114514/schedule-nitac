@@ -12,7 +12,7 @@
 </div>
 {% endwith %}
 <div class="flexbox">
-    <form class="form-horizontal" role="form" action="/teacher" method="POST"
+    <form class="form-horizontal" role="form" action="/edit" method="POST"
           enctype=multipart/form-data>
         <div class="col-md-9 personal-info">
             <h3>Manage page</h3>
@@ -24,7 +24,7 @@
                                 <h3>全体</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="all" value="1"> 全体</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="all" value="67108863"> 全体</label>
                             </td>
                         </tr>
                     </table>
@@ -36,16 +36,16 @@
                                 <h3>1年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio1" value="2"> 1M</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio1" value="1"> 1M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio2" value="3"> 1E</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio2" value="2"> 1E</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio3" value="5"> 1C</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio3" value="4"> 1C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio4" value="7"> 1A</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio4" value="8"> 1A</label>
                             </td>
                         </tr>
                     </table>
@@ -58,16 +58,16 @@
                                 <h3>2年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio5" value="11"> 2M</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio5" value="16"> 2M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio6" value="13"> 2E</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio6" value="32"> 2E</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio7" value="17"> 2C</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio7" value="64"> 2C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio8" value="19"> 2A</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio8" value="128"> 2A</label>
                             </td>
                         </tr>
                     </table>
@@ -80,16 +80,16 @@
                                 <h3>3年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio9" value="23"> 3M</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio9" value="256"> 3M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio10" value="29"> 3E</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio10" value="512"> 3E</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio11" value="31"> 3C</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio11" value="1024"> 3C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio12" value="37"> 3A</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio12" value="2048"> 3A</label>
                             </td>
                         </tr>
                     </table>
@@ -102,19 +102,19 @@
                                 <h3>4年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio13" value="41"> 4M</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio13" value="4096"> 4M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio14" value="43"> 4EJ</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio14" value="8192"> 4EJ</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio15" value="47"> 4ED</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio15" value="16384"> 4ED</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio16" value="53"> 4C</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio16" value="32768"> 4C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio17" value="59"> 4A</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio17" value="65536"> 4A</label>
                             </td>
                         </tr>
                     </table>
@@ -127,19 +127,19 @@
                                 <h3>5年</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="61"> 5M</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="131072"> 5M</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="67"> 5EJ</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="262144"> 5EJ</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="71"> 5ED</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="524288"> 5ED</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="73"> 5C</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="1048576"> 5C</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio22" value="79"> 5A</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio22" value="2097152"> 5A</label>
                             </td>
                         </tr>
                     </table>
@@ -151,16 +151,16 @@
                                 <h3>専攻科</h3>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="83"> 1A.ME</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="4194304"> 1A.ME</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="89"> 1A.CA</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="8388608"> 1A.CA</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="97"> 2A.ME</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="16777216"> 2A.ME</label>
                             </td>
                             <td class="radio">
-                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="101"> 2A.CA</label>
+                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="33554432"> 2A.CA</label>
                             </td>
                         </tr>
                     </table>
