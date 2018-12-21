@@ -1,0 +1,32 @@
+{% extends "layout.html"%}
+
+{% block inner_nav %}
+<ul class="nav navbar-nav">
+    <li><a href="/">Multi</a></li>
+</ul>
+{% endblock %}
+
+{% block inner_content %}
+
+<div class="panel panel-default mail_form">
+    <div class="panel panel-default mail_form">
+        <div class="panel-heading">
+            emailアドレス
+        </div>
+        <div class="panel-body">
+            {{user.email}}
+        </div>
+        <div class="panel-heading">
+            配信停止しますか？一度停止された場合、もう一度配信を希望される場合には再びメールでの認証をしなければいけません。
+        </div>
+        <div class="modal-footer">
+            <form action="/mail/unsub/submit" method="post">
+                <button type="submit" class="btn btn-primary">配信停止</button>
+                <input type="button" value="キャンセル" class="btn btn-secondary" data-dismiss="modal"
+                       onClick="location.href='http://google.com'">
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

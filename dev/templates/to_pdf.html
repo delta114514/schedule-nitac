@@ -1,0 +1,175 @@
+<meta charset="utf-8"/>
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+<style>
+    .square {
+    border: 5px solid {{color}};
+    text-align: center;
+    position: relative;
+    width: 247mm;
+    height: 172mm;
+
+}
+
+.depart{
+    font-size: 120;
+    padding-top: 20;
+}
+.teacher{
+    font-size: 50;
+    color: #484848;
+    position: relative;
+    bottom: 60;
+    min-height: 60;
+}
+.class{
+    font-size: 50;
+    word-wrap:break-word;
+    width: 100%;
+    height: 150;
+    align-content: center;
+    position: relative;
+}
+.date{
+    padding-top: 40px;
+    font-size: 45;
+
+}
+.gen{
+    font-size: 30;
+}
+.with{
+    padding-top: 120;
+    font-size: 50
+}
+.res{
+    padding-top: 30;
+    font-size: 50;
+}
+.id{
+    position: absolute;
+    bottom: 0px;
+    right: 4px;
+    text-align: right;
+    font-size: 30;
+}
+
+.content {
+    font-size: 2em;
+}
+
+body {
+    position: relative;
+}
+
+@media print{
+    .square{
+      margin: 5mm;
+    }
+}
+
+@page {
+  size: B5 landscape;
+}
+.col-md-5  {
+    -ms-flex: 0 0 41.666667%;
+    flex: 0 0 41.666667%;
+    max-width: 41.666667%;
+}
+
+.col-md-2 {
+    -ms-flex: 0 0 16.666667%;
+    flex: 0 0 16.666667%;
+    max-width: 16.666667%;
+}
+</style>
+
+
+<body>
+<table style="width: 100%;">
+  <tr>
+     <td style="text-align: center; vertical-align: middle;">
+        <div class="square">
+            <div class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h1 class="text-center depart">
+                                {{depart}}
+                            </h1>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h3 class="teacher">
+                                {{art.change_from_teacher}}
+                                <h3 class="class">
+                                    {{art.change_from_class}}
+                                </h3>
+                                {% if art.change_from_date != "none"　%}
+                                    {% if art.change_from_date %}
+                                        <span class="date">
+                                            {{"/".join(art.change_from_date[5:].split("-")) + "(" + "月火水木金土日"[datetime.date(*list(map(int ,art.change_from_date.split("-")))).weekday()] + ")" + art.change_from_time}}
+                                        </span>
+                                        <span class="gen">
+                                            限
+                                        </span>
+                                    {% else %}
+                                        <span class="date">
+                                            休講
+                                        </span>
+                                    {% endif %}
+                                {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <h3>
+
+                            </h3>
+                            <h3 class="with">
+                                は
+                            </h3>
+                        </div>
+                        <div class="col-md-5">
+                            <h3 class="teacher">
+                                {{art.change_to_teacher}}
+                            </h3>
+                            <h3 class="class">
+                                {{art.change_to_class}}
+                            </h3>
+                            {% if art.change_to_date != "none"　%}
+                                {% if art.change_to_date %}
+                                        <span class="date">
+                                            {{"/".join(art.change_to_date[5:].split("-")) + "(" + "月火水木金土日"[datetime.date(*list(map(int ,art.change_to_date.split("-")))).weekday()] + ")" + art.change_to_time}}
+                                        </span>
+                                        <span class="gen">
+                                            限
+                                        </span>
+                                    {% else %}
+                                        <span class="date">
+                                            休講
+                                        </span>
+                                    {% endif %}
+                                {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h3 class="res">
+                                {{situ}}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <span class="id">
+                                {{under}}
+                            </span>
+            </div>
+
+        </div>
+
+     </td>
+  </tr>
+</table>
+</body>

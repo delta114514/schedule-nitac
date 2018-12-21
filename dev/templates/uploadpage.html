@@ -1,0 +1,244 @@
+{% extends "layout.html" %}
+{% block inner_content%}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="alert alert-danger" role="alert">
+    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+    <strong>There were errors during registration</strong>
+    {% for message in messages %}
+    <h4>{{ message }}</h4>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endwith %}
+<div class="flexbox">
+    <form class="form-horizontal" role="form" action="/edit" method="POST"
+          enctype=multipart/form-data>
+        <div class="col-md-9 personal-info">
+            <h3>Manage page</h3>
+            <div class="container">
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <h3>全体</h3>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="all" value="67108863"> 全体</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <h3>1年</h3>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio1" value="1"> 1M</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio2" value="2"> 1E</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio3" value="4"> 1C</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio4" value="8"> 1A</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <h3>2年</h3>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio5" value="16"> 2M</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio6" value="32"> 2E</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio7" value="64"> 2C</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio8" value="128"> 2A</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <h3>3年</h3>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio9" value="256"> 3M</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio10" value="512"> 3E</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio11" value="1024"> 3C</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio12" value="2048"> 3A</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <h3>4年</h3>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio13" value="4096"> 4M</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio14" value="8192"> 4EJ</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio15" value="16384"> 4ED</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio16" value="32768"> 4C</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio17" value="65536"> 4A</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <h3>5年</h3>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="131072"> 5M</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="262144"> 5EJ</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="524288"> 5ED</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="1048576"> 5C</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio22" value="2097152"> 5A</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <h3>専攻科</h3>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio18" value="4194304"> 1A.ME</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio19" value="8388608"> 1A.CA</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio20" value="16777216"> 2A.ME</label>
+                            </td>
+                            <td class="radio">
+                                <label class="checkbox-inline"><input type="checkbox" name="radio21" value="33554432"> 2A.CA</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更元の日付 (空きコマなら必要ありません)</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="date" name="from_date">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更元の限目 (空きコマなら必要ありません)</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="text" name="from_time">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更元の授業 (空きコマなら必要ありません)</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="text" name="from_class">
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更元の教員</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="text" name="from_teacher">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更先の日付 (休講なら必要ありません)</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="date" name="to_date">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更先の限目 (休講なら必要ありません)</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="text" name="to_time">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更先の授業 (休講なら必要ありません)</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="text" name="to_class">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">変更先の教員</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="text" name="to_teacher">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">備考 (無くてもかまいません)</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="text" name="remark">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Confirm Password:</label>
+                    <div class="col-lg-8">
+                        <input class="form-control" type="password" name="password"
+                               placeholder="confirm password">
+                    </div>
+                </div>
+                <input type="submit" value="submit" class="btns btn-primary btn-large btn-block">
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -4,17 +4,23 @@ import os
 import hashlib
 import datetime
 import random
+import secrets
+import smtplib
+import re
 
+from email import message
 from collections import defaultdict
 from itertools import accumulate
+from threading import Thread
 
-from flask import Flask, flash, redirect, render_template, request, session, send_from_directory, jsonify, \
-    make_response, abort
+from flask import Flask, flash, redirect, render_template, request, send_from_directory, jsonify, make_response, abort
 from flask_login import login_user, logout_user, LoginManager, UserMixin, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 
-today = datetime.date(10, 1, 1)
+
+JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
+today = datetime.datetime.now(JST)
 dat = {2: '1M', 3: '1E', 5: '1C', 7: '1A', 11: '2M', 13: '2E', 17: '2C', 19: '2A', 23: '3M', 29: '3E',
        31: '3C', 37: '3A', 41: '4M', 43: '4EJ', 47: '4ED', 53: '4C', 59: '4A', 61: '5M', 67: '5EJ',
        71: '5ED', 73: '5C', 79: '5A', 83: '1A.ME', 89: '1A.CA', 97: '2A.ME', 101: '2A.CA'}
@@ -35,8 +41,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 db = SQLAlchemy(app)
 bootstrap = Bootstrap(app)
 
+token_re = re.compile(r"mail/unsub/.+")
+
 with open("password", "r") as f:
-    pass1, pass2, pass3 = f.read().split()
+    pass1, pass2, pass3, mail_pass = f.read().split()
 
 
 class View(db.Model):
@@ -76,10 +84,10 @@ class Teacher(UserMixin, db.Model):
         return False
 
     def get_id(self):
-        return (self.id)
+        return self.id
 
     def __repr__(self):
-        return '<Teacher %r>' % (self.name)
+        return '<Teacher %r>' % self.name
 
 
 class Entry(db.Model):
@@ -94,12 +102,12 @@ class Entry(db.Model):
     change_from_teacher = db.Column(db.String(32))
     change_to_teacher = db.Column(db.String(32))
     target_depart = db.Column(db.Integer)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.now())
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.now(JST))
     published = db.Column(db.Integer)
     remark = db.Column(db.String(256))
     contributor = db.Column(db.Integer)
 
-    def __init__(self,changeid=999, change_from_class="", change_to_class="", change_from_date="", change_to_date="",
+    def __init__(self, changeid=999, change_from_class="", change_to_class="", change_from_date="", change_to_date="",
                  change_from_time="", change_to_time="", target_depart="", remark="", contributor="",
                  change_from_teacher="", change_to_teacher="", published=0):
         self.changeid = changeid
@@ -115,6 +123,32 @@ class Entry(db.Model):
         self.published = published
         self.change_from_teacher = change_from_teacher
         self.change_to_teacher = change_to_teacher
+
+
+class Mail_verify(db.Model):
+    __tablename__ = 'mail_verify'
+    email = db.Column(db.String(8))
+    token = db.Column(db.String(64), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.now(JST))
+    class_ = db.Column(db.Integer)
+
+    def __init__(self, email="", token="", timestamp=datetime.datetime.now(JST), class_=0):
+        self.email = email
+        self.token = token
+        self.timestamp = timestamp
+        self.class_ = class_
+
+
+class Valid_Mails(db.Model):
+    __tablename__ = "valid_mail"
+    email = db.Column(db.String(32))
+    class_ = db.Column(db.Integer)
+    token = db.Column(db.String(32), primary_key=True)
+
+    def __init__(self, email, class_, token):
+        self.email = email
+        self.class_ = class_
+        self.token = token
 
 
 @login_manager.user_loader
@@ -163,15 +197,150 @@ def before_request():
         db.session.commit()
 
 
+def send_verify_mail(email, token):
+    text = f"""
+こちらClassManager(Schedule-Nitac)運営です。
+メール通知サービスへの登録ありがとうございます。
+以下のURLに接続いただくとご登録が完了します。
+
+    https://schedule-nitac.mybluemix.net/mail/token/{token}
+
+認証URLは30分後の {(datetime.datetime.now(JST)+datetime.timedelta(0,1800)).strftime("%Y/%m/%d %H:%M")} まで有効です。
+心当たりのない方はこのメールを破棄してください。
+
+ClassManager(Schedule-Nitac)
+https://schedule-nitac.mybluemix.net/
+    """
+    smtp_host = 'smtp.gmail.com'
+    smtp_port = 587
+    from_email = 'schedule.nitac@gmail.com'
+    to_email = email
+    username = 'schedule.nitac@gmail.com'
+    password = mail_pass
+
+    msg = message.EmailMessage()
+    msg.set_content(text)
+    msg['Subject'] = '【ClassManager】登録認証URL'
+    msg['From'] = from_email
+    msg['To'] = to_email
+
+    server = smtplib.SMTP(smtp_host, smtp_port)
+    server.ehlo()
+    server.starttls()
+    server.ehlo()
+    server.login(username, password)
+    server.send_message(msg)
+    server.quit()
+
+
+def send_change_mail(user, changes):
+    global dat
+    text = f"""
+こちらClassManager(Schedule-Nitac)運営です。<br>
+本日の授業の変更です。<br>
+<hr>
+<html>
+<table border=1 cellspacing="0" bordercolor="#C4CAC7">
+        <thead>
+        <tr>
+            <th>対象</th>
+            <th>内容</th>
+            <th>日時</th>
+            <th>科目</th>
+            <th>備考</th>
+        </tr>
+        </thead>
+        <tbody>"""
+    for art in changes:
+        text += f"""
+            <tr>
+    
+                {"<td>" + ", ".join(list(map(lambda x: dat[x], prime_factors(art.target_depart)))) + "</td>" if art.target_depart != 1 else "<td>全体</td>"}
+                <td>{"振替" if art.change_from_teacher and art.change_to_teacher else "移動" if
+                    art.change_from_date and art.change_to_date else "休講"}
+                </td>
+                <td>{(art.change_from_date[5:] + "(" + "月火水木金土日"[datetime.datetime(*list(map(int
+                    ,art.change_from_date.split("-")))).weekday()] + ")" + ": " + art.change_from_time + "限" ) if
+                    art.change_from_date else "休講"}
+                    {'⇔' if (art.change_from_teacher and art.change_to_teacher) else '→'}
+                    {(art.change_to_date[5:] + "(" + "月火水木金土日"[datetime.datetime(*list(map(int
+                    ,art.change_to_date.split("-")))).weekday()] + ")" + ": " + art.change_to_time + "限" ) if
+                    art.change_to_date
+                    else "休講"}
+                </td>
+                <td>{art.change_from_class+ "(" + art.change_from_teacher + ")" if
+                    art.change_from_class else "なし"}
+                    {'⇔' if (art.change_from_teacher and art.change_to_teacher) else '→'}
+                    {art.change_to_class + "(" + art.change_to_teacher + ")" if art.change_to_class
+                    else "なし"}
+                </td>
+                <td>{art.remark if art.remark else "なし"} </td>
+            </tr>
+            </tbody>"""
+    text += f"""
+</table>
+</html>
+<hr>
+<br>
+配信停止を希望される方はこちらのURLまで接続してください。
+<br><br>
+https://schedule-nitac.mybluemix.net/mail/unsub/{user.token}
+<br><br>
+ClassManager(Schedule-Nitac)
+https://schedule-nitac.mybluemix.net/
+    """
+    print(user.email)
+    smtp_host = 'smtp.gmail.com'
+    smtp_port = 587
+    from_email = 'schedule.nitac@gmail.com'
+    to_email = user.email
+    username = 'schedule.nitac@gmail.com'
+    password = mail_pass
+
+    msg = message.EmailMessage()
+    msg.set_content(text, subtype='html')
+    msg['Subject'] = '【ClassManager】本日の変更'
+    msg['From'] = from_email
+    msg['To'] = to_email
+
+    server = smtplib.SMTP(smtp_host, smtp_port)
+    server.ehlo()
+    server.starttls()
+    server.ehlo()
+    server.login(username, password)
+    server.send_message(msg)
+    server.quit()
+
+
+def change_mail():
+    timestamp = datetime.datetime.now(JST)
+    ents = Entry.query.all()
+    sends = defaultdict(set)
+    for ent in ents:
+        if timestamp in [datetime.datetime(*map(int, ent.change_to_date.split("-"))), datetime.datetime(*map(int, ent.change_from_date.split("-")))]:
+            for depart in prime_factors(ent.target_depart):
+                sends[depart].add(ent)
+    users = Valid_Mails.query.all()
+    for user in users:
+        tmp = set()
+        for depart in prime_factors(user.class_):
+            tmp |= sends[depart]
+        if tmp:
+            send_change_mail(user, tmp)
+
+
 def main_page(page, class_=None):
     global dat, all_set, dat_rev
     try:
         global today
-        if today < datetime.date.today():
+        if today < datetime.datetime.now(JST):
             del_lim()
+            thread = Thread(target=change_mail)
+            thread.start()
+            today = datetime.datetime.now(JST)
     except:
         del_lim()
-        today = datetime.date.today()
+        today = datetime.datetime.now(JST)
     if class_:
         try:
             tmp = {dat_rev[class_], }
@@ -207,7 +376,6 @@ def main_page(page, class_=None):
     except:
         new = 0
 
-
     if current_user.is_authenticated:
         p = Entry.query.order_by(Entry.target_depart).all()
     else:
@@ -222,6 +390,7 @@ def main_page(page, class_=None):
                                        datetime=datetime, map=map, list=list, int=int, len=len, range=range,
                                        lambda_=lambda x: dat[x], new=new),
                        list(accumulate(tmp, lambda x, y: x * y))[-1])
+
 
 @app.route("/favicon.ico")
 def favicon():
@@ -314,6 +483,78 @@ def logout():
     return redirect("/")
 
 
+@app.route("/mail/request", methods=["GET", "POST"])
+def mail_request():
+    if request.method == "GET":
+        return render_template("mail_request.html")
+    timestamp = datetime.datetime.now(JST)
+    try:
+        if Mail_verify.query.first():
+            if Mail_verify.query.first().timestamp.replace(tzinfo=JST) < timestamp - datetime.timedelta(0, 1800):
+                Mail_verify.query.filter(Mail_verify.timestamp.replace(tzinfo=JST) < timestamp - datetime.timedelta(0, 1800)).delete()
+                db.session.commit()
+    except AttributeError:
+        pass
+    error = 0
+    if not request.form["email"]:
+        flash("emailアドレスを入力してください")
+        error = 1
+    if len(request.form) < 2:
+        flash("クラスを選択して下さい")
+        error = 1
+    if Valid_Mails.query.filter(Valid_Mails.email.in_([request.form["email"]])).first():
+        flash("すでに登録されています")
+        error = 1
+    if Mail_verify.query.filter(Mail_verify.email.in_([request.form["email"]])).first():
+        flash("すでにメールをお送りしています")
+        error = 1
+    if error:
+        return render_template("mail_request.html")
+    token = secrets.token_urlsafe(32).lower()
+    send_verify_mail(token=token, email=request.form["email"])
+    class_ = 1
+    for key, value in request.form.items():
+        if key.startswith("radio"):
+            class_ *= int(value)
+    user = Mail_verify(email=request.form["email"], token=token, timestamp=timestamp, class_=class_)
+    db.session.add(user)
+    db.session.commit()
+
+    return render_template("mail_request_fin.html")
+
+
+@app.route("/mail/token/<token>")
+def mail_token(token):
+    timestamp = datetime.datetime.now(JST)
+    try:
+        if Mail_verify.query.first().timestamp < timestamp - datetime.timedelta(0, 1800):
+            db.session.delete(Mail_verify.query.filter(Mail_verify.timestamp < timestamp - datetime.timedelta(0, 1800)))
+            db.session.commit()
+    except AttributeError:
+        pass
+    user = Mail_verify.query.get_or_404(token)
+    va_user = Valid_Mails(email=user.email, class_=user.class_, token=secrets.token_urlsafe(32).lower())
+    db.session.delete(user)
+    db.session.add(va_user)
+    db.session.commit()
+    return render_template("mail_fin.html")
+
+
+@app.route("/mail/unsub/<token>")
+def mail_unsub(token):
+    user = Valid_Mails.query.get_or_404(token)
+    return render_template("mail_unsub_conf.html", user=user)
+
+
+@app.route("/mail/unsub/submit", methods=["POST"])
+def mail_unsub_fin():
+    token = token_re.search(request.referrer)[0][11:]
+    user = Valid_Mails.query.get_or_404(token)
+    db.session.delete(user)
+    db.session.commit()
+    return render_template("mail_unsub_fin.html")
+
+
 @app.route('/teacher', methods=['GET', 'POST'])
 @login_required
 def upload():
@@ -391,15 +632,13 @@ def json_date(day):
     try:
         try:
             global today
-            if today < datetime.date.today():
+            if today < datetime.datetime.now(JST):
                 del_lim()
         except:
             del_lim()
-            today = datetime.date.today()
+            today = datetime.datetime.now(JST)
         jsons = {i: "" for i in day.replace(" ", "").split(";")}
         for date in day.split(";"):
-            tmp = date.split("-")
-            tmp = datetime.date(*map(int, tmp))
             p_from = Entry.query.filter(Entry.change_from_date.in_([date])).order_by(Entry.target_depart).all()
             p_to = Entry.query.filter(Entry.change_to_date.in_([date])).order_by(Entry.target_depart).all()
             p_all = list(set(p_from) | set(p_to))
@@ -426,11 +665,11 @@ def json_depart(depart):
         global dat
         try:
             global today
-            if today < datetime.date.today():
+            if today < datetime.datetime.now(JST):
                 del_lim()
         except:
             del_lim()
-            today = datetime.date.today()
+            today = datetime.datetime.now(JST)
         p = Entry.query.all()
 
         dat_rev = {value: key for key, value in dat.items()}
@@ -492,6 +731,7 @@ def edit(num=0):
         p.change_to_teacher = request.form["to_teacher"]
         p.remark = request.form["remark"]
         p.published = request.form["published"]
+        p.timestamp = datetime.datetime.now(JST)
         if str(request.form["delete"]) == "いいよ！こいよ！":
             db.session.delete(p)
             db.session.commit()
@@ -566,9 +806,10 @@ def image_dir(passw, filename):
 def files(filename):
     return send_from_directory("./", filename)
 
+
 @app.route('/to_pdf/<id_>')
 def to_pdf(id_):
-    col = {"m": "red", "e": "orange", "c": "cyan", "a": "green", "all": "#250d00"}
+    col = {"m": "#d6331d", "e": "#ffac3f", "c": "#6da5ff", "a": "#8fb70b", "all": "#250d00"}
     art = Entry.query.filter(Entry.changeid.in_([id_])).first()
     if not art:
         abort(404)
@@ -610,10 +851,15 @@ def to_pdf(id_):
         depart = "専攻科生"
         color = col["all"]
     else:
-        depart = ",".join(list(map(lambda x: dat[x], prime_factors(depart))))
-        color = col[depart[-1].lower()]
+        prim = prime_factors(depart)
+        depart = ",".join(list(map(lambda x: dat[x], prim)))
+        if len(prim) != 1:
+            color = col["all"]
+        else:
+            color = col[depart[-1].lower()]
 
-    under = "{}月{}日 学生課 No.{}".format(int(datetime.date.today().strftime("%m")), int(datetime.date.today().strftime("%d")), art.changeid)
+    under = "{}月{}日 学生課 No.{}".format(int(datetime.datetime.now(JST).strftime("%m")),
+                                      int(datetime.datetime.now(JST).strftime("%d")), art.changeid)
 
     situ = "と振替える" if art.change_from_teacher and art.change_to_teacher else "に移動する" if art.change_from_date and art.change_to_date else "休講とする"
 
@@ -623,14 +869,15 @@ def to_pdf(id_):
         art.change_to_date = "none"
         art.change_to_teacher = ""
 
-    return render_template("to_pdf.html", datetime=datetime, dat=dat, art=art, depart=depart, map=map, int=int, list=list, under=under, situ=situ, color=color)
+    return render_template("to_pdf.html", datetime=datetime, dat=dat, art=art, depart=depart, map=map, int=int,
+                           list=list, under=under, situ=situ, color=color)
 
 
 def feed_cookie(content, cookie):
     response = make_response(content)
     max_age = 60 * 60 * 24 * 120
     response.set_cookie('depart', value=str(cookie * 810893), max_age=max_age)
-    response.set_cookie('last_seen', value=datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S"), max_age=max_age)
+    response.set_cookie('last_seen', value=datetime.datetime.now(JST).strftime("%Y-%m-%d-%H-%M-%S"), max_age=max_age)
     return response
 
 
@@ -664,14 +911,14 @@ def del_lim():
     deleted = False
     for ent in p:
         try:
-            bef = datetime.date(*list(map(int, ent.change_from_date.split("-"))))
+            bef = datetime.datetime(*list(map(int, ent.change_from_date.split("-"))), tzinfo=JST)
         except:
-            bef = datetime.date(1, 1, 1)
+            bef = datetime.datetime(1, 1, 1, tzinfo=JST)
         try:
-            to = datetime.date(*list(map(int, ent.change_to_date.split("-"))))
+            to = datetime.datetime(*list(map(int, ent.change_to_date.split("-"))), tzinfo=JST)
         except:
-            to = datetime.date(1, 1, 1)
-        if max(bef, to) < datetime.date.today():
+            to = datetime.datetime(1, 1, 1, tzinfo=JST)
+        if max(bef, to) < (datetime.datetime.now(JST) - datetime.timedelta(1)):
             db.session.delete(ent)
             deleted = True
     if deleted:
@@ -688,6 +935,7 @@ def prime_factors(n):
         if not n % i:
             factors.append(i)
     return set(factors)
+
 
 
 if __name__ == "__main__":

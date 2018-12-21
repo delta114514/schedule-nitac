@@ -1,0 +1,27 @@
+{% extends "layout.html"%}
+
+{% block inner_nav %}
+<ul class="nav navbar-nav">
+    <li><a href="/">Multi</a></li>
+</ul>
+{% endblock %}
+
+{% block inner_content %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="alert alert-danger" role="alert">
+  <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+    {% for message in messages %}
+    <h4>{{ message }}</h4>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endwith %}
+
+<div class="panel panel-default mail_form">
+    <div class="panel-body">
+    認証が完了しました。<br>毎日夜0時、登録されたクラスに新たな時間割り変更があった場合メールで通知されます。
+    </div>
+</div>
+{% endblock %}

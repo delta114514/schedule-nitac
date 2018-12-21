@@ -1,0 +1,181 @@
+{% extends "layout.html"%}
+
+{% block inner_nav %}
+<ul class="nav navbar-nav">
+    <li><a href="/">Multi</a></li>
+</ul>
+{% endblock %}
+
+{% block inner_content %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="alert alert-danger" role="alert">
+  <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+    {% for message in messages %}
+    <h4>{{ message }}</h4>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endwith %}
+
+<div class="panel panel-default mail_form">
+    <div class="panel-body">
+        <form action="/mail/request" method="post">
+            <div class="form-group">
+                <label for="exampleInputEmail1">Email アドレス</label>
+                <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"
+                       placeholder="emailを入力してください" name="email">
+                <small id="emailHelp" class="form-text text-muted">変更があった場合、< schedule.nitac@gmail.com >からメールを送信します
+                </small>
+            </div>
+            <div class="form-group">
+                <label>通知を受け取りたいクラス</label>
+                <div class="row">
+                    <div class="col-lg-12 ">
+                        <table>
+                            <tr>
+                                <td ~~~ style="word-wrap:break-word;">
+                                    <div class="button-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle"
+                                                data-toggle="dropdown">
+                                            <span>1年</span> <span class="caret"></span></button>
+                                        <ul class="dropdown-menu list-group checked-list-box">
+                                            <li class="list-group-item">1M<input
+                                                    type="checkbox" name="radio1" value="2" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">1E<input
+                                                    type="checkbox" name="radio2" value="3" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">1C<input
+                                                    type="checkbox" name="radio3" value="5" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">1A<input
+                                                    type="checkbox" name="radio4" value="7" class="class_button"/>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td ~~~ style="word-wrap:break-word;">
+                                    <div class="button-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle"
+                                                data-toggle="dropdown">
+                                            <span>2年</span> <span class="caret"></span></button>
+                                        <ul class="dropdown-menu list-group checked-list-box">
+                                            <li class="list-group-item">2M<input
+                                                    type="checkbox" name="radio5" value="11" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">2E<input
+                                                    type="checkbox" name="radio6" value="13" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">2C<input
+                                                    type="checkbox" name="radio7" value="17" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">2A<input
+                                                    type="checkbox" name="radio8" value="19" class="class_button"/>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td ~~~ style="word-wrap:break-word;">
+                                    <div class="button-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle"
+                                                data-toggle="dropdown">
+                                            <span>3年</span> <span class="caret"></span></button>
+                                        <ul class="dropdown-menu list-group checked-list-box">
+                                            <li class="list-group-item">3M<input
+                                                    type="checkbox" name="radio9" value="23" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">3E<input
+                                                    type="checkbox" name="radio10" value="29" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">3C<input
+                                                    type="checkbox" name="radio11" value="31" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">3A<input
+                                                    type="checkbox" name="radio12" value="37" class="class_button"/>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td ~~~ style="word-wrap:break-word;">
+                                    <div class="button-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle"
+                                                data-toggle="dropdown">
+                                            <span>4年</span> <span class="caret"></span></button>
+                                        <ul class="dropdown-menu list-group checked-list-box">
+                                            <li class="list-group-item">4M<input
+                                                    type="checkbox" name="radio13" value="41" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">4EJ<input
+                                                    type="checkbox" name="radio14" value="43" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">4ED<input
+                                                    type="checkbox" name="radio15" value="47" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">4C<input
+                                                    type="checkbox" name="radio16" value="53" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">4A<input
+                                                    type="checkbox" name="radio17" value="59" class="class_button"/>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td ~~~ style="word-wrap:break-word;">
+                                    <div class="button-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle"
+                                                data-toggle="dropdown">
+                                            <span>5年</span> <span class="caret"></span></button>
+                                        <ul class="dropdown-menu list-group checked-list-box">
+                                            <li class="list-group-item">5M<input
+                                                    type="checkbox" name="radio18" value="61" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">5EJ<input
+                                                    type="checkbox" name="radio19" value="67" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">5ED<input
+                                                    type="checkbox" name="radio20" value="71" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">5C<input
+                                                    type="checkbox" name="radio21" value="73" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">5A<input
+                                                    type="checkbox" name="radio22" value="79" class="class_button"/>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td ~~~ style="word-wrap:break-word;">
+                                    <div class="button-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle"
+                                                data-toggle="dropdown">
+                                            <span>専攻科</span> <span class="caret"></span></button>
+                                        <ul class="dropdown-menu list-group checked-list-box">
+                                            <li class="list-group-item">1A.ME<input
+                                                    type="checkbox" name="radio23" value="83" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">1A.CA<input
+                                                    type="checkbox" name="radio24" value="89" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">2A.ME<input
+                                                    type="checkbox" name="radio25" value="97" class="class_button"/>
+                                            </li>
+                                            <li class="list-group-item">2A.CA<input
+                                                    type="checkbox" name="radio26" value="101"
+                                                    class="class_button"/></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">送信</button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

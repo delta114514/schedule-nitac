@@ -1,0 +1,6 @@
+---
+applications:
+ - name: schedule-nitac
+   random-route: true
+   memory: 256M
+   command: python main.py

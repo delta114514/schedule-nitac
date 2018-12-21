@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block inner_content %}
+{{current_user.userid}}
+<form action="/login" method="POST">
+    <div class="login">
+        <div class="login-screen">
+            <div class="app-title">
+                <h1>Login</h1>
+            </div>
+            <div class="login-form">
+                <div class="control-group">
+                    <input type="text" class="login-field cool-input" value="" placeholder="Email address"
+                           name="email">
+                    <label class="login-field-icon fui-user" for="login-name"></label>
+                </div>
+                <div class="control-group">
+                    <input type="password" class="login-field cool-input" value="" placeholder="password" name="password">
+                    <label class="login-field-icon fui-lock" for="login-pass"></label>
+                </div>
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="alert alert-danger" role="alert">
+                    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                    <strong>There were errors during authentication</strong>
+                    {% for message in messages %}
+                    <h4>{{ message }}</h4>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                {% endwith %}
+                <input type="submit" value="Log in" class="btns btn-primary btn-large btn-block">
+                <br>
+            </div>
+        </div>
+        <h3 style="font-size: 1.3em; text-align: center">登録: <a href="/register/teacher" style="text-align: center;">教員</a> <a href="/register/clerk" style="text-align: center;">事務員</a></h3>
+    </div>
+</form>
+
+{% endblock %}
