@@ -267,7 +267,7 @@ def main_page(page, class_=None):
                     tmp = bins[0]
                 if not tmp:
                     tmp = bins[0]
-    if tmp > 2**64:
+    if tmp > 2 ** 64:
         tmp = bins[0]
     try:
         last = request.cookies.get("last_seen")
@@ -562,14 +562,13 @@ def json_date(day):
             json["all_match"]["count"] = len(p_all)
             jsons[date] = json
         return jsonify(jsons)
-    except:
+    except Exception:
         abort(500)
 
 
 @app.route("/json/class/<depart>")
 def json_depart(depart):
     try:
-        global dat
         try:
             global today
             if today < datetime.datetime.now(JST):
@@ -593,10 +592,9 @@ def json_depart(depart):
                 for class_ in int2classes(change.target_depart & tmp):
                     json[class_][str(len(json[class_]))] = json_it(change)
                     json[class_]["count"] += 1
-        print(json)
         return jsonify(json)
-    except Exception as e:
-        raise
+    except Exception:
+        abort(500)
 
 
 @app.route("/json/reference")
@@ -679,7 +677,6 @@ def proposals(passw):
     if passw == proposal_pass:
         txt = "<table border=\"1\" width=\"400\"><tr><th>timestamp</th><th>ip</th><th>body</th></tr>"
         for prop in Proposal.query.all():
-            print(prop, Proposal.query.all())
             txt += "<tr><td>{}</td><td>{}</td><td>{}</td></tr>".format(prop.timestamp, prop.ip, prop.body)
         txt += "</table>"
         return txt
