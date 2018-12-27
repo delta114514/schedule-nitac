@@ -21,7 +21,7 @@ def int2bin(n: int) -> str:
     try:
         return format(n, "027b")
     except:
-        return "1"*27
+        return "1" * 27
 
 
 def bin2int(n: str) -> int:
@@ -218,12 +218,12 @@ https://schedule-nitac.mybluemix.net/
 
 def change_mail():
     timestamp = str(datetime.date.fromtimestamp(datetime.datetime.now(JST).timestamp()))
-    ents = Entry.query.filter(SQLAlchemy.or_(Entry.change_from_date.in_([timestamp]), Entry.change_to_date.in_([timestamp])))
-    sends = defaultdict(list)
+    ents = Entry.query.filter((Entry.change_from_date.in_([timestamp])) | (Entry.change_to_date.in_([timestamp])))
+    sends = defaultdict(set)
     for ent in ents:
         for change in ents:
             for class_ in int2bins(change.target_depart):
-                sends[class_].append(ent)
+                sends[class_].add(ent)
     users = ValidMails.query.all()
     tmp = set()
     for user in users:
@@ -267,6 +267,8 @@ def main_page(page, class_=None):
                     tmp = bins[0]
                 if not tmp:
                     tmp = bins[0]
+    if tmp > 2**64:
+        tmp = bins[0]
     try:
         last = request.cookies.get("last_seen")
         if datetime.datetime.strptime(last, cookie_timestamp_str) < datetime.datetime.fromtimestamp(
@@ -836,4 +838,4 @@ if __name__ == "__main__":
     if not os._exists("database.db"):
         db.create_all()
     app.secret_key = os.urandom(12)
-    app.run(debug=False, host="0.0.0.0", port=8888, threaded=True)
+    app.run(debug=False, host="0.0.0.0", port=8080, threaded=True)

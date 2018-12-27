@@ -5,3 +5,4 @@ flask-sqlalchemy
 flask-bootstrap
 google-api-python-client
 oauth2client
+pyjwt
